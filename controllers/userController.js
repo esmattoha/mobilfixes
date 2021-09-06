@@ -5,11 +5,9 @@ const { validationResult } = require("express-validator");
 const User = require("../models/userModel");
 const catchAsync = require("./../utils/catchAsync");
 const AppError = require("./../utils/appError");
-const {
-  signAccessToken
-} = require("../utils/tokenImplement");
+const { signAccessToken } = require("../utils/tokenImplement");
 const errorMessages = require("../resources/errorMessages");
-const { transmitEmail } = require("../utils/mailTransport");
+const { sendMessage } = require("../utils/userKnock");
 const successMessages = require("../resources/successMessages");
 
 /*
@@ -29,7 +27,7 @@ exports.signUp = catchAsync(async (req, res, next) => {
     return res.status(400).json({ errors: error()[0].msg });
   }
 
-  const mobileNumber = "+1" + phone;
+  const mobileNumber = "+91" + phone;
   const OTP = Math.floor(Math.random() * 1000000);
   const otpTokenExpiration = Date.now() + 2 * 60 * 1000;
 
@@ -48,10 +46,14 @@ exports.signUp = catchAsync(async (req, res, next) => {
   if (!user) {
     return next(new AppError(errorMessages.GENERAL, 406));
   }
-  await transmitEmail({
+  await sendMessage({
     email: email,
+    phone: mobileNumber,
     subject: "Email Verification.",
-    body: `<h3>Welcome to Mobilfixes , ${name} </h3>, 
+    body: `Welcome to Mobilfixes , ${name},
+     Here is your Otp ${OTP}.
+     Do not share it with anyone.`,
+    html: `<h3>Welcome to Mobilfixes , ${name} </h3>, 
          <p>Here is Your Otp ${OTP}.</p>
         <p>Do not share it with anyone.</p>`,
   });
@@ -309,7 +311,7 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
   user.resertTokenExpiration = Date.now() + 2 * 60 * 1000;
   await user.save();
 
-  await transmitEmail({
+  await sendMessage({
     email: email,
     subject: "Password Reset",
     body: `

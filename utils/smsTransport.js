@@ -18,6 +18,6 @@ const transmitSMS = async(options) =>{
 };
 
 // exports
-module.exports = { transmitSMS };
+// module.exports = { transmitSMS };
 
 
