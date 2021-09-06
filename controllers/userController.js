@@ -48,16 +48,12 @@ exports.signUp = catchAsync(async (req, res, next) => {
   }
   await sendMessage({
     email: email,
-    phone: mobileNumber,
     subject: "Email Verification.",
-    body: `Welcome to Mobilfixes , ${name},
-     Here is your Otp ${OTP}.
-     Do not share it with anyone.`,
     html: `<h3>Welcome to Mobilfixes , ${name} </h3>, 
          <p>Here is Your Otp ${OTP}.</p>
         <p>Do not share it with anyone.</p>`,
   });
-  return res.status(200).json("We send a otp on your email for verification.");
+  res.status(200).json("We send a otp on your email for verification.");
 });
 
 /**
@@ -314,7 +310,7 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
   await sendMessage({
     email: email,
     subject: "Password Reset",
-    body: `
+    html: `
       <h3>Password Reset!</h3>
       <p>Make sure, you want to change your password?</p>
       <a href="http://localhost:5000/user/reset/${token}">Click Here</a>

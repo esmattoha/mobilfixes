@@ -47,8 +47,9 @@ const transmitSMS = async (options) => {
  * @param {*} options 
  */
 const sendMessage = async (options) => {
-  await transmitEmail(options);
-
+  if(options.email){
+     await transmitEmail(options);
+  }
   if (options.phone) {
     await transmitSMS(options);
   }
