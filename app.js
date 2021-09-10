@@ -27,6 +27,7 @@ const shipmentRouter = require("./routers/shipmentRoute");
 const paymentRouter = require("./routers/paymentRoute");
 const cancelationRoute = require("./routers/cancelationRequestesRoute");
 const authRoute = require("./routers/authRoute");
+const productRoute = require("./routers/productRoute");
 
 //Admin Routes
 const adminUserRouter = require("./routers/admin/user");
@@ -99,6 +100,7 @@ app.use(shipmentRouter);
 app.use(paymentRouter);
 app.use(cancelationRoute);
 app.use(authRoute);
+app.use(productRoute);
 
 //Admin Routes
 app.use("/admin/user", adminUserRouter);
