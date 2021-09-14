@@ -42,9 +42,33 @@ const productSchema = new Schema(
         },
       },
     ],
+    conditions: [
+      {
+        title: {
+          type: String,
+          required: true,
+        },
+        deduction: {
+          type: Number,
+          default: 0,
+        },
+      },
+    ],
+    questions: [
+      {
+        title: {
+          type: String,
+          required: true,
+        },
+        deduction: {
+          type: Number,
+          default: 0,
+        },
+      },
+    ],
   },
   {
-    timestamps: true
+    timestamps: true,
   }
 );
 

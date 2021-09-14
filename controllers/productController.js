@@ -1,9 +1,12 @@
 const Product = require("../models/productModel");
 
 /**
- *
+ * 
+ * @param {*} req 
+ * @param {*} res 
+ * @param {*} next 
+ * @returns 
  */
-
 exports.store = async (req, res, next) => {
   const { title, image, highest_price, variations } = req.body;
 
@@ -21,7 +24,11 @@ exports.store = async (req, res, next) => {
 };
 
 /**
- *
+ * 
+ * @param {*} req 
+ * @param {*} res 
+ * @param {*} next 
+ * @returns 
  */
 exports.addNewVariation = async (req, res, next) => {
   const productId = req.params.id;
@@ -51,9 +58,12 @@ exports.addNewVariation = async (req, res, next) => {
 };
 
 /**
- *
+ * 
+ * @param {*} req 
+ * @param {*} res 
+ * @param {*} next 
+ * @returns 
  */
-
 exports.removeVariation = async (req, res, next) => {
   const { productId, variationId } = req.body;
 
@@ -69,6 +79,106 @@ exports.removeVariation = async (req, res, next) => {
 
 /**
  * 
+ * @param {*} req 
+ * @param {*} res 
+ * @param {*} next 
+ * @returns 
+ */
+exports.addNewCondition = async(req, res, next) =>{
+  const productId = req.params.id ;
+  const { conditions } = req.body;
+
+  const condition = {
+    $push :{
+      conditions :{
+        title : conditions.title,
+        deduction: conditions.deduction
+      }
+    }
+  }
+
+  const updatedProduct = await Product.findByIdAndUpdate(productId, condition);
+  if (!updatedProduct) {
+    return res.status(404).json("Product not found.");
+  }
+
+  res.status(200).json("Pushed Successfully.");
+}
+
+/**
+ * 
+ * @param {*} req 
+ * @param {*} res 
+ * @param {*} next 
+ * @returns 
+ */
+exports.removeCondition = async(req, res, next) =>{
+  const { productId , conditionsId } = req.body ;
+
+  const updatedProduct = await Product.findByIdAndUpdate(productId, {
+    $pull:{ conditions : { _id : conditionsId}}
+  });
+  if (!updatedProduct) {
+    return res.status(404).json("Product not found.");
+  }
+
+  res.status(200).json("Poped Successfully.");
+
+}
+
+/**
+ * 
+ * @param {*} req 
+ * @param {*} res 
+ * @param {*} next 
+ * @returns 
+ */
+exports.addNewQuestion = async(req, res, next) =>{
+  const productId = req.params.id ;
+  const { questions } = req.body ;
+
+  const question ={
+    $push :{
+      questions:{
+        title: questions.title,
+        deduction: questions.deduction
+      }
+    }
+  }
+  const updatedProduct = await Product.findByIdAndUpdate(productId, question);
+  if (!updatedProduct) {
+    return res.status(404).json("Product not found.");
+  }
+
+  res.status(200).json("Pushed Successfully.");
+}
+
+/**
+ * 
+ * @param {*} req 
+ * @param {*} res 
+ * @param {*} next 
+ * @returns 
+ */
+exports.removeQuestion = async(req, res, next) =>{
+  const { productId , questionId } = req.body ;
+
+  const updatedProduct = await Product.findByIdAndUpdate(productId, {
+    $pull:{ questions : { _id : questionId}}
+  });
+  if (!updatedProduct) {
+    return res.status(404).json("Product not found.");
+  }
+
+  res.status(200).json("Poped Successfully.");
+
+}
+/**
+ * 
+ * @param {*} req 
+ * @param {*} res 
+ * @param {*} next 
+ * @returns 
  */
 exports.delete = async(req, res, next ) =>{
     const productId = req.params.id;
