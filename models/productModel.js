@@ -44,7 +44,7 @@ const productSchema = new Schema(
     ],
   },
   {
-    toJSON: { getters: true },
+    timestamps: true
   }
 );
 
