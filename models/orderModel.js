@@ -13,11 +13,13 @@ const orderSchema = new Schema(
     },
     type: {
       type: String,
-      enum: ["appointment", "order"],
+      enum: ["appointment", "order", "buy"],
     },
     metaData: {
       device: Object,
       model: Object,
+      variation : Object,
+      condition : Object
     },
     customer: {
       type: mongoose.Schema.ObjectId,
@@ -33,6 +35,7 @@ const orderSchema = new Schema(
           type: String,
           required: [true, "Title is required."],
         },
+        device: String,
         quantity: {
           type: Number,
           required: [true, "Quantity is required."],
@@ -42,6 +45,9 @@ const orderSchema = new Schema(
           type: Number,
           required: [true, "Price is required."],
         },
+        variations: Object,
+        condition : Object,
+        questions : Array
       },
     ],
     customerInfo: {

@@ -9,6 +9,7 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const rateLimit = require("express-rate-limit");
 
 // Custom Error Calss and Error Handler
 const AppError = require("./utils/appError");
@@ -27,6 +28,7 @@ const shipmentRouter = require("./routers/shipmentRoute");
 const paymentRouter = require("./routers/paymentRoute");
 const cancelationRoute = require("./routers/cancelationRequestesRoute");
 const authRoute = require("./routers/authRoute");
+const dashboardRoute = require("./routers/dashboardRoute");
 const productRoute = require("./routers/productRoute");
 
 //Admin Routes
@@ -73,8 +75,7 @@ app.use(cors(corsOptions));
 (async () => {
   try {
     await mongoose.connect(process.env.MONGODB_URL, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
+      useNewUrlParser: true
     });
     console.log("You are successfully connect with MongoDb Database");
   } catch (error) {
@@ -88,7 +89,12 @@ app.use(cors(corsOptions));
 app.use(express.json());
 
 // Rate Limiting Middleware
-// app.use(customLimiter);
+const limiter = {
+  max: 100,
+  windowMs: 60 * 60 * 1000,
+  message: "Too many requests from this IP, please try again in an hour!",
+};
+app.use(rateLimit(limiter));
 
 //Public Routes
 app.use("/user", userRouter);
@@ -100,6 +106,7 @@ app.use(shipmentRouter);
 app.use(paymentRouter);
 app.use(cancelationRoute);
 app.use(authRoute);
+app.use(dashboardRoute);
 app.use(productRoute);
 
 //Admin Routes

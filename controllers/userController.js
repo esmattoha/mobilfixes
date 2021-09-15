@@ -5,36 +5,38 @@ const { validationResult } = require("express-validator");
 const User = require("../models/userModel");
 const catchAsync = require("./../utils/catchAsync");
 const AppError = require("./../utils/appError");
-const { signAccessToken } = require("../utils/tokenImplement");
+const { signAccessToken } = require("../utils/jwtTokenHelper");
 const errorMessages = require("../resources/errorMessages");
-const { sendMessage } = require("../utils/userKnock");
+const mailTransport = require("../utils/mailTransport");
 const successMessages = require("../resources/successMessages");
+const optGenerator = require("../utils/otpGenerator");
 
 /*
  * Working with User Sign Up Form
  */
 exports.signUp = catchAsync(async (req, res, next) => {
   const { name, email, phone, password } = req.body;
-
   if (!name || !email || !phone || !password) {
     return next(new AppError("Invalid data Input", 406));
   }
   // Password encryption
   const hashPassword = await bcrypt.hash(password, 12);
-  // data validation
+  // Data validation
   const error = validationResult(req);
   if (!error.isEmpty()) {
     return res.status(400).json({ errors: error()[0].msg });
   }
-
-  const mobileNumber = "+91" + phone;
-  const OTP = Math.floor(Math.random() * 1000000);
-  const otpTokenExpiration = Date.now() + 2 * 60 * 1000;
-
   if (!hashPassword) {
     return;
   }
-  const user = await User.create({
+
+  const mobileNumber = "+1" + phone;
+  // Generating
+  const OTP = optGenerator.generate();
+  // OTP exipration time
+  const otpTokenExpiration = Date.now() + 2 * 60 * 1000;
+
+  const user = new User({
     name,
     email,
     phone: mobileNumber,
@@ -42,18 +44,13 @@ exports.signUp = catchAsync(async (req, res, next) => {
     otpToken: OTP,
     otpTokenExpiration: otpTokenExpiration,
   });
-
-  if (!user) {
+  const doc = await user.save();
+  if (!doc) {
     return next(new AppError(errorMessages.GENERAL, 406));
   }
-  await sendMessage({
-    email: email,
-    subject: "Email Verification.",
-    html: `<h3>Welcome to Mobilfixes , ${name} </h3>, 
-         <p>Here is Your Otp ${OTP}.</p>
-        <p>Do not share it with anyone.</p>`,
-  });
-  res.status(200).json("We send a otp on your email for verification.");
+  res.status(200).json("A Verification code has been sent to your email");
+  // Sending the OTP for verification
+  await mailTransport.emailVerification(OTP, email);
 });
 
 /**
@@ -132,13 +129,13 @@ exports.index = catchAsync(async (req, res) => {
 /*
  *   Delete a user
  */
-exports.delete = catchAsync(async (req, res) => {
-  const userId = req.params.userId;
-  if (!userId) {
+exports.delete = catchAsync(async (req, res, next) => {
+  const id = req.params.id;
+  if (!id) {
     return next(new AppError("Invalid data Input", 406));
   }
 
-  await User.findByIdAndDelete(userId);
+  await User.findByIdAndDelete(id);
   res.status(200).json({ message: errorMessages.RESOUCE_DELETED });
 });
 
@@ -179,8 +176,15 @@ exports.update = catchAsync(async (req, res, next) => {
  */
 exports.addNewAddress = catchAsync(async (req, res, next) => {
   const customer = req.user;
-  const { long, lat, addressLine1, addressLine2, city, state, zipcode } =
-    req.body;
+  const {
+    long,
+    lat,
+    addressLine1,
+    addressLine2,
+    city,
+    state,
+    zipcode,
+  } = req.body;
 
   if (!addressLine1 || !addressLine2 || !city || !state || !zipcode) {
     return next(new AppError("Invalid data Input", 406));
@@ -225,8 +229,15 @@ exports.showAddresses = catchAsync(async (req, res, next) => {
 exports.updateAddress = catchAsync(async (req, res, next) => {
   const customer = req.user;
   const { addressId } = req.query;
-  const { long, lat, addressLine1, addressLine2, city, state, zipcode } =
-    req.body;
+  const {
+    long,
+    lat,
+    addressLine1,
+    addressLine2,
+    city,
+    state,
+    zipcode,
+  } = req.body;
 
   if (
     !addressId ||
@@ -295,31 +306,14 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
   if (!user) {
     return next(new AppError(errorMessages.RESOURCE_NOT_FOUND, 404));
   }
-
-  const buffer = await crypto.randomBytes(32);
-  if (!buffer) {
-    // Unable to generate token
-    return next(new AppError(errorMessages.GENERAL, 403));
-  }
-  const token = await buffer.toString("hex");
-
+  const token = optGenerator.generate();
   user.resetToken = token;
   user.resertTokenExpiration = Date.now() + 2 * 60 * 1000;
   await user.save();
-
-  await sendMessage({
-    email: email,
-    subject: "Password Reset",
-    html: `
-      <h3>Password Reset!</h3>
-      <p>Make sure, you want to change your password?</p>
-      <a href="http://localhost:5000/user/reset/${token}">Click Here</a>
-      `,
+  res.status(200).json({
+    message: "Please enter the verification code been sent to your email",
   });
-
-  res
-    .status(200)
-    .json({ message: "Password reset link has been sent to your email" });
+  await mailTransport.emailVerification(token, email);
 });
 
 /*

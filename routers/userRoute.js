@@ -3,6 +3,7 @@ const express = require("express");
 const { check } = require("express-validator");
 const userController = require("../controllers/userController");
 const { isLoggedIn } = require("./../middleware/checkAuthMiddleware");
+const userAuthMiddleware = require("./../middleware/userAuthMiddleware");
 const cache = require("../middleware/cacheMiddleware/cache");
 
 // Define Express router poperty
@@ -16,6 +17,16 @@ router.post(
   check("email", "Invalid email").isEmail(),
   userController.signUp
 );
+
+/**
+ * Delete User
+ */
+router.delete(
+  "/delete/:id",
+  [isLoggedIn, userAuthMiddleware.checkAdmin],
+  userController.delete
+);
+
 /**
  * email Verification
  */

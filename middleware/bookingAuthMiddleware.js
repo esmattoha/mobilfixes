@@ -1,7 +1,7 @@
 const User = require("../models/userModel");
 const catchAsync = require("../utils/catchAsync");
 const extractToken = require("../utils/extractToken");
-const validateToken = require("../utils/validateToken");
+const { validateToken } = require("../utils/validateToken");
 const bcrypt = require("bcrypt");
 
 //Middleare to check and register user

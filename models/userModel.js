@@ -51,7 +51,7 @@ const userSchema = new Schema(
       default: null,
     },
     stripeId: String,
-    otpToken: Number,
+    otpToken: String,
     otpTokenExpiration: Date,
     resetToken: String,
     resertTokenExpiration: Date,

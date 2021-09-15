@@ -9,6 +9,7 @@ const errorMessages = require("../resources/errorMessages");
 const APIFeatures = require("../utils/apiFeatures");
 const { orderReport } = require("../utils/mailTransport");
 const { createPaymentIntent, store } = require("./paymentController");
+const Product = require("../models/productModel");
 
 /*
  *   Store Booking
@@ -17,6 +18,7 @@ exports.store = catchAsync(async (req, res, next) => {
   const {
     type,
     items,
+    productPrice,
     customerInfo,
     shippingAddress,
     billingAddress,
@@ -25,17 +27,25 @@ exports.store = catchAsync(async (req, res, next) => {
     appointmentTime,
   } = req.body;
 
-  if (!type || !items || !customerInfo || !shippingAddress || !service) {
+  if (!type || !customerInfo || !shippingAddress || !service) {
     return next(new AppError(`Invalid input data`, 406));
   }
 
   //Delete Customer password
   delete customerInfo.password;
 
+  // 
   const customer = req.user._id;
-  const orderItems = await getOrderItems(type, items);
+  let orderItems;
+  let totalOrderAmount;
+  if (items) {
+    orderItems = await getOrderItems(type, items);
+    totalOrderAmount = getTotalAmount(orderItems);
+  }else{
+    orderItems = await productItem(req);
+  }
   const metaData = await getMetaData(req);
-  const totalOrderAmount = getTotalAmount(orderItems);
+  
 
   // Save Order data
   const order = new Order({
@@ -48,7 +58,7 @@ exports.store = catchAsync(async (req, res, next) => {
     shippingAddress,
     billingAddress,
     customerNotes,
-    totalAmount: totalOrderAmount,
+    totalAmount: totalOrderAmount ? totalOrderAmount : productPrice,
     service,
     appointmentTime,
     status: service == "we-come-to-you" ? "hold" : "processing",
@@ -79,6 +89,27 @@ const getOrderItems = async (type, items) => {
   const repairItemsData = await Promise.all(repairItems);
   return Promise.resolve(repairItemsData);
 };
+
+/**
+ * 
+ * @param {*} req 
+ * @returns 
+ */
+const productItem = async (req) => {
+  const { product } = req.body;
+
+  const productData = await Product.findById(product._id);
+
+  return Promise.resolve({
+    _id: product._id,
+    price: productData.maxPrice,
+    device: productData.device,
+    title: productData.title,
+    variations: product.variations,
+    condition: product.condition,
+    questions: product.questions,
+  });
+};
 /**
  *
  * @param orderItems : Array of Items Objects
@@ -86,11 +117,10 @@ const getOrderItems = async (type, items) => {
  */
 const getTotalAmount = (orderItems) => {
   const reducer = (accumulator, curr) => accumulator + curr;
-
   const itemsPrice = orderItems.map((item) => {
     return item.price;
   });
-  return itemsPrice.reduce(reducer);
+  return itemsPrice.reduce(reducer).toFixed(2);
 };
 /**
  * @param req
@@ -246,12 +276,13 @@ exports.update = catchAsync(async (req, res, next) => {
   return store(req, res);
 });
 
+
 /*
  *   Delete Booking
  */
 exports.delete = catchAsync(async (req, res, next) => {
   const { id } = req.params;
-  const orderId = id ;
+  const orderId = id;
 
   const doc = await Order.findByIdAndDelete(orderId);
   if (!doc) {

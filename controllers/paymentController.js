@@ -50,7 +50,28 @@ const createPaymentIntent = async (orderDetails, customer, amount) => {
 
   intentObject.customer = stripeCustomerId;
   // intentObject.setup_future_usage = "off_session";
-  const paymentIntent = await stripe.paymentIntents.create(intentObject);
+  let paymentIntent;
+  try {
+    paymentIntent = await stripe.paymentIntents.create(intentObject);
+  } catch (err) {
+    if (err.code === "authentication_required") {
+      paymentIntent = {
+        error: "authentication_required",
+        paymentMethod: err.raw.payment_method.id,
+        clientSecret: err.raw.payment_intent.client_secret,
+        amount: amount,
+        card: {
+          brand: err.raw.payment_method.card.brand,
+          last4: err.raw.payment_method.card.last4,
+        },
+      };
+    } else if (err.code) {
+      paymentIntent = {
+        error: err.code,
+        clientSecret: err.raw.payment_intent.client_secret,
+      };
+    }
+  }
   return Promise.resolve(paymentIntent);
 };
 
@@ -59,11 +80,11 @@ const getIntent = catchAsync(async (req, res) => {
   const { orderId, amount } = req.body;
 
   if (!orderId) {
-    return AppError(`Invalid data input`, 406);
+    return new AppError(`Invalid data input`, 406);
   }
   const order = await Order.findById(orderId);
   if (!order) {
-    return AppError(`Invalid data input`, 406);
+    return new AppError(`Invalid data input`, 406);
   }
 
   if (order.service == "mail-in") {
@@ -79,6 +100,11 @@ const getIntent = catchAsync(async (req, res) => {
     customer,
     amount || 30
   );
+
+  if (paymentIntent.error) {
+    return res.status(200).json(paymentIntent);
+  }
+
   res.status(201).json({
     id: paymentIntent.id,
     clientSecret: paymentIntent.client_secret,
@@ -89,14 +115,14 @@ const getIntent = catchAsync(async (req, res) => {
 const store = catchAsync(async (req, res) => {
   const { paymentIntent } = req.body;
   if (!paymentIntent) {
-    return AppError(`Invalid data input`, 406);
+    return new AppError(`Invalid data input`, 406);
   }
 
   const intentData = await stripe.paymentIntents.retrieve(paymentIntent);
   const orderNumber = intentData.metadata.orderNumber;
 
   if (intentData.status != "succeeded") {
-    return AppError(`Payment is not complete`, 400);
+    return new AppError(`Payment is not complete`, 400);
   }
 
   const order = await Order.findOneAndUpdate(

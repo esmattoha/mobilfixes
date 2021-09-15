@@ -11,7 +11,7 @@ exports.index = catchAsync(async (req, res) => {
  */
 exports.store = catchAsync(async (req, res, next) => {
   const path = req.file.path;
-  if(!path){
+  if (!path) {
     return next(new AppError("Invalid data Input", 406));
   }
 
@@ -27,7 +27,7 @@ exports.store = catchAsync(async (req, res, next) => {
  */
 exports.delete = catchAsync(async (req, res, next) => {
   const fileId = req.params.fileId;
-  if(!fileId){
+  if (!fileId) {
     return next(new AppError("Invalid data Input", 406));
   }
 

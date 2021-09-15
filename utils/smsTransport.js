@@ -8,16 +8,28 @@ const client = require('twilio')(accountSid, authToken);
  * @param {*} phone 
  * @param {*} status 
  */
-const transmitSMS = async(options) =>{
+const orderUpdate = ( phone,status) =>{
  client.messages
   .create({
-     body: `${options.body}`,
+     body: `Your order has ${status}.`,
      from: '+19786307041',
-     to: options.phone
+     to: phone
    })
 };
 
+/**
+ * 
+ * @param {*} phone 
+ */
+const createdOrder = ( phone) =>{
+    client.messages
+  .create({
+     body: `Your have ordered succesfully.`,
+     from: '+19786307041',
+     to: phone
+   })
+}
 // exports
-// module.exports = { transmitSMS };
+module.exports = { orderUpdate , createdOrder };
 
 

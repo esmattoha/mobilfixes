@@ -7,7 +7,7 @@
 const express = require("express");
 const router = express.Router();
 const userController = require("./../../controllers/userController");
-const { isLoggedIn} = require("./../../middleware/checkAuthMiddleware");
+const { isLoggedIn } = require("./../../middleware/checkAuthMiddleware");
 const userAuth = require("./../../middleware/userAuthMiddleware");
 const cache = require("./../../middleware/cacheMiddleware/cache");
 const catchAsync = require("../../utils/catchAsync");
@@ -69,10 +69,6 @@ router.post(
 /*
  *  Delete User
  */
-router.delete(
-  "/:userId",
-  [isLoggedIn, userAuth.checkAdmin],
-  userController.delete
-);
+router.delete("/:id", [isLoggedIn, userAuth.checkAdmin], userController.delete);
 
 module.exports = router;
