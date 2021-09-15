@@ -1,193 +1,78 @@
-const Product = require("../models/productModel");
+const catchAsync = require("../utils/catchAsync");
+const APIFeatures = require("./../utils/apiFeatures");
+const Product = require("./../models/productModel");
+const AppError = require("../utils/appError");
+const errorMessages = require("../resources/errorMessages");
 
-/**
- * 
- * @param {*} req 
- * @param {*} res 
- * @param {*} next 
- * @returns 
- */
-exports.store = async (req, res, next) => {
-  const { title, image, highest_price, variations } = req.body;
+const index = catchAsync(async (req, res, next) => {
+  const features = new APIFeatures(
+    Product.find({ status: "published" }),
+    req.query
+  )
+    .filter()
+    .sort()
+    .limitedFields()
+    .paginate();
 
-  const product = await Product.create({
-    title,
-    image,
-    highest_price,
-    variations,
+  const products = await features.query;
+
+  res.status(200).json({
+    status: "success",
+    data: products,
   });
+});
+
+const show = catchAsync(async (req, res, next) => {
+  const product = await Product.findById(req.params.id);
+
   if (!product) {
-    return res.status(406).json("something went wrong.");
+    return next(new AppError("Product not found", 404));
   }
 
-  res.status(201).json("Successfully Created.");
-};
+  res.status(200).json({
+    status: "success",
+    data: product,
+  });
+});
 
-/**
- * 
- * @param {*} req 
- * @param {*} res 
- * @param {*} next 
- * @returns 
- */
-exports.addNewVariation = async (req, res, next) => {
-  const productId = req.params.id;
-  const { variations } = req.body;
-
-  const variation = {
-    $push: {
-      variations: {
-        storage: {
-          size: variations.storage.size,
-          deduction: variations.storage.deduction,
-        },
-        colour: {
-          title: variations.colour.title,
-          deduction: variations.colour.deduction,
-        },
-      },
-    },
-  };
-
-  const product = await Product.findByIdAndUpdate(productId, variation);
+const store = catchAsync(async (req, res, next) => {
+  const product = await Product.create(req.body);
   if (!product) {
-    return res.status(404).json("Product not found.");
+    return next(new AppError(errorMessages.GENERAL, 400));
   }
 
-  res.status(200).json("Pushed Successfully.");
+  res.status(201).json({
+    status: "success",
+    data: product,
+  });
+});
+
+const update = catchAsync(async (req, res, next) => {
+  const { id } = req.params.id;
+
+  const product = await Product.findByIdAndUpdate(id, req.body);
+
+  res.status(200).json({
+    status: "success",
+    data: product,
+  });
+});
+
+const destroy = catchAsync(async (req, res, next) => {
+  const { id } = req.params.id;
+
+  const product = await Product.findByIdAndDelete(id);
+
+  res.status(200).json({
+    status: "success",
+    data: null,
+  });
+});
+
+module.exports = {
+  index,
+  show,
+  store,
+  update,
+  destroy,
 };
-
-/**
- * 
- * @param {*} req 
- * @param {*} res 
- * @param {*} next 
- * @returns 
- */
-exports.removeVariation = async (req, res, next) => {
-  const { productId, variationId } = req.body;
-
-  const product = await Product.findByIdAndUpdate(productId,{
-      $pull : { variations: { _id : variationId}}
-  });
-  if (!product) {
-    return res.status(404).json("Product not found.");
-  }
-
-  res.status(200).json("Poped Successfully.");
-};
-
-/**
- * 
- * @param {*} req 
- * @param {*} res 
- * @param {*} next 
- * @returns 
- */
-exports.addNewCondition = async(req, res, next) =>{
-  const productId = req.params.id ;
-  const { conditions } = req.body;
-
-  const condition = {
-    $push :{
-      conditions :{
-        title : conditions.title,
-        deduction: conditions.deduction
-      }
-    }
-  }
-
-  const updatedProduct = await Product.findByIdAndUpdate(productId, condition);
-  if (!updatedProduct) {
-    return res.status(404).json("Product not found.");
-  }
-
-  res.status(200).json("Pushed Successfully.");
-}
-
-/**
- * 
- * @param {*} req 
- * @param {*} res 
- * @param {*} next 
- * @returns 
- */
-exports.removeCondition = async(req, res, next) =>{
-  const { productId , conditionsId } = req.body ;
-
-  const updatedProduct = await Product.findByIdAndUpdate(productId, {
-    $pull:{ conditions : { _id : conditionsId}}
-  });
-  if (!updatedProduct) {
-    return res.status(404).json("Product not found.");
-  }
-
-  res.status(200).json("Poped Successfully.");
-
-}
-
-/**
- * 
- * @param {*} req 
- * @param {*} res 
- * @param {*} next 
- * @returns 
- */
-exports.addNewQuestion = async(req, res, next) =>{
-  const productId = req.params.id ;
-  const { questions } = req.body ;
-
-  const question ={
-    $push :{
-      questions:{
-        title: questions.title,
-        deduction: questions.deduction
-      }
-    }
-  }
-  const updatedProduct = await Product.findByIdAndUpdate(productId, question);
-  if (!updatedProduct) {
-    return res.status(404).json("Product not found.");
-  }
-
-  res.status(200).json("Pushed Successfully.");
-}
-
-/**
- * 
- * @param {*} req 
- * @param {*} res 
- * @param {*} next 
- * @returns 
- */
-exports.removeQuestion = async(req, res, next) =>{
-  const { productId , questionId } = req.body ;
-
-  const updatedProduct = await Product.findByIdAndUpdate(productId, {
-    $pull:{ questions : { _id : questionId}}
-  });
-  if (!updatedProduct) {
-    return res.status(404).json("Product not found.");
-  }
-
-  res.status(200).json("Poped Successfully.");
-
-}
-/**
- * 
- * @param {*} req 
- * @param {*} res 
- * @param {*} next 
- * @returns 
- */
-exports.delete = async(req, res, next ) =>{
-    const productId = req.params.id;
-
-    const product = await Product.findByIdAndDelete(productId);
-    if (!product) {
-        return res.status(404).json("Product not found.");
-      }
-    
-      res.status(200).json("Delete Successfully.");
-
-}
