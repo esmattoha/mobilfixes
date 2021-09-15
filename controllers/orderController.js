@@ -7,9 +7,9 @@ const catchAsync = require("../utils/catchAsync");
 const AppError = require("../utils/appError");
 const errorMessages = require("../resources/errorMessages");
 const APIFeatures = require("../utils/apiFeatures");
-const { orderReport } = require("../utils/mailTransport");
 const { createPaymentIntent, store } = require("./paymentController");
 const Product = require("../models/productModel");
+const { sendEmail } = require("../utils/email");
 
 /*
  *   Store Booking
@@ -250,7 +250,6 @@ exports.update = catchAsync(async (req, res, next) => {
   if (status == "cancelled") {
     // Charge the card
     await order.save();
-    await orderReport(status, customerEmail);
     return res.status(200).json({ message: "Successfull" });
   }
 
@@ -273,6 +272,14 @@ exports.update = catchAsync(async (req, res, next) => {
   }
   req.body.paymentIntent = paymentIntent.id;
   await order.save();
+  await sendEmail({
+    email : customerEmail,
+    subject : "Order Update",
+    html : `
+    <h1>Order Update Report</h1>
+    <p>your order has ${status}</p>
+    `
+  });
   return store(req, res);
 });
 

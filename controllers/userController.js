@@ -7,10 +7,10 @@ const catchAsync = require("./../utils/catchAsync");
 const AppError = require("./../utils/appError");
 const { signAccessToken } = require("../utils/jwtTokenHelper");
 const errorMessages = require("../resources/errorMessages");
-const mailTransport = require("../utils/mailTransport");
 const successMessages = require("../resources/successMessages");
 const optGenerator = require("../utils/otpGenerator");
-
+const { sendEmail } = require("../utils/email");
+ 
 /*
  * Working with User Sign Up Form
  */
@@ -49,8 +49,15 @@ exports.signUp = catchAsync(async (req, res, next) => {
     return next(new AppError(errorMessages.GENERAL, 406));
   }
   res.status(200).json("A Verification code has been sent to your email");
-  // Sending the OTP for verification
-  await mailTransport.emailVerification(OTP, email);
+  await sendEmail({
+    email : doc.email,
+    subject : "Registration",
+    html : 
+    ` <h1>Welcome to Mobilfixes , ${doc.name}</h1>
+      <p>Here is your otp ${OTP}</p>
+      <p>Do not share with anyone.</p>
+    `
+  })
 });
 
 /**
