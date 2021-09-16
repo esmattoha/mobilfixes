@@ -39,7 +39,7 @@ exports.store = catchAsync(async (req, res, next) => {
   let orderItems;
   let totalOrderAmount;
   if (items) {
-    orderItems = await getOrderItems(type, items);
+    orderItems = await getOrderItems(items);
     totalOrderAmount = getTotalAmount(orderItems);
   }else{
     orderItems = await productItem(req);
@@ -81,7 +81,7 @@ exports.store = catchAsync(async (req, res, next) => {
  * @param req
  * @returns Repairs or Product Array
  */
-const getOrderItems = async (type, items) => {
+const getOrderItems = async (items) => {
   // For Apoointment items are repairs
   const repairItems = items.map(async (item) => {
     return await Repair.findById(item).select("-device -services -__v");
@@ -89,6 +89,8 @@ const getOrderItems = async (type, items) => {
   const repairItemsData = await Promise.all(repairItems);
   return Promise.resolve(repairItemsData);
 };
+
+module.exports = { getOrderItems};
 
 /**
  * 
@@ -110,6 +112,9 @@ const productItem = async (req) => {
     questions: product.questions,
   });
 };
+
+module.exports = { productItem };
+
 /**
  *
  * @param orderItems : Array of Items Objects
@@ -139,6 +144,8 @@ const getMetaData = async (req) => {
     model: modelData,
   });
 };
+
+module.exports = {getMetaData} ;
 
 /*
  *  Customer's bookings
