@@ -29,5 +29,5 @@ const sendEmail = async (options) => {
 };
 
 
-// 
+// export
 module.exports = { sendEmail };
