@@ -30,7 +30,7 @@ router.delete(
 /**
  * email Verification
  */
-router.post("/email-verification", userController.validateEmail);
+router.post("/email-verification/:token", userController.verifyEmail);
 
 /*
  *  User Sign In Route

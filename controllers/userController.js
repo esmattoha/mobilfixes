@@ -16,46 +16,44 @@ const { sendEmail } = require("../utils/email");
  */
 exports.signUp = catchAsync(async (req, res, next) => {
   const { name, email, phone, password } = req.body;
-  if (!name || !email || !phone || !password) {
-    return next(new AppError("Invalid data Input", 406));
-  }
+    if (!name || !email || !phone || !password) {
+      return next(new AppError("Invalid data Input", 406));
+    }
+
   // Password encryption
   const hashPassword = await bcrypt.hash(password, 12);
-  // Data validation
-  const error = validationResult(req);
-  if (!error.isEmpty()) {
-    return res.status(400).json({ errors: error()[0].msg });
-  }
   if (!hashPassword) {
     return;
   }
 
-  const mobileNumber = "+1" + phone;
-  // Generating
-  const OTP = optGenerator.generate();
-  // OTP exipration time
-  const otpTokenExpiration = Date.now() + 2 * 60 * 1000;
+  const verificationToken = crypto.randomBytes(32).toString('hex');
+  const encryptedVerificationToken = crypto
+    .createHash('sha256')
+    .update(verificationToken)
+    .digest('hex');
 
-  const user = new User({
+  const mobileNumber = "+1" + phone;
+   
+
+  const user = await User.create({
     name,
     email,
     phone: mobileNumber,
     password: hashPassword,
-    otpToken: OTP,
-    otpTokenExpiration: otpTokenExpiration,
+    verification_token: encryptedVerificationToken,
+    verification_expire_at: Date.now() + 2 * 60 * 1000,
   });
-  const doc = await user.save();
-  if (!doc) {
+
+  if (!user) {
     return next(new AppError(errorMessages.GENERAL, 406));
   }
   res.status(200).json("A Verification code has been sent to your email");
   await sendEmail({
-    email : doc.email,
+    email : user.email,
     subject : "Registration",
     html : 
-    ` <h1>Welcome to Mobilfixes , ${doc.name}</h1>
-      <p>Here is your otp ${OTP}</p>
-      <p>Do not share with anyone.</p>
+    ` <h1>Welcome to Mobilfixes , ${user.name}</h1>
+      <p><a href="http://localhost:5000/user/email-verification/${verificationToken}">click here</a> & verify your email.</p>
     `
   })
 });
@@ -63,22 +61,30 @@ exports.signUp = catchAsync(async (req, res, next) => {
 /**
  *  Email Validation of New User
  */
-exports.validateEmail = catchAsync(async (req, res, next) => {
-  const { otpToken } = req.body;
-  if (!otpToken) {
+exports.verifyEmail = catchAsync(async (req, res, next) => {
+  const { token } = req.params;
+
+  if (!token) {
     return next(new AppError("Invalid data Input", 406));
   }
+  const encryptedVerificationToken = crypto
+    .createHash('sha256')
+    .update(token)
+    .digest('hex');
+
   // find User
   const user = await User.findOne({
-    otpToken: otpToken,
-    otpTokenExpiration: { $gte: Date.now() },
+    verification_token: encryptedVerificationToken,
+    verification_expire_at: { $gte: Date.now() },
   });
+
   if (!user) {
     return res.status(200).json("Request from Unknown Resource.");
   }
 
-  user.otpToken = undefined;
-  user.otpTokenExpiration = undefined;
+  user.verification_token = undefined;
+  user.verification_expire_at = undefined;
+
   await user.save();
   return res.status(200).json("Email has been successfully verified.");
 });

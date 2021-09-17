@@ -75,7 +75,7 @@ app.use(cors(corsOptions));
 (async () => {
   try {
     await mongoose.connect(process.env.MONGODB_URL, {
-      useNewUrlParser: true
+      useNewUrlParser: true, useUnifiedTopology: true
     });
     console.log("You are successfully connect with MongoDb Database");
   } catch (error) {
