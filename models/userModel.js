@@ -53,8 +53,8 @@ const userSchema = new Schema(
     stripeId: String,
     verification_token: String,
     verification_expire_at: Date,
-    resetToken: String,
-    resertTokenExpiration: Date,
+    reset_token: String,
+    reset_expire_at: Date,
   },
   {
     timestamps: true,

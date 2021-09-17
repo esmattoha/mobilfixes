@@ -1,7 +1,6 @@
 // Import Dependencis
 const bcrypt = require("bcrypt");
 const crypto = require("crypto");
-const { validationResult } = require("express-validator");
 const User = require("../models/userModel");
 const catchAsync = require("./../utils/catchAsync");
 const AppError = require("./../utils/appError");
@@ -47,7 +46,6 @@ exports.signUp = catchAsync(async (req, res, next) => {
   if (!user) {
     return next(new AppError(errorMessages.GENERAL, 406));
   }
-  res.status(200).json("A Verification code has been sent to your email");
   await sendEmail({
     email : user.email,
     subject : "Registration",
@@ -56,6 +54,8 @@ exports.signUp = catchAsync(async (req, res, next) => {
       <p><a href="http://localhost:5000/user/email-verification/${verificationToken}">click here</a> & verify your email.</p>
     `
   })
+  res.status(200).json("A Verification code has been sent to your email");
+  
 });
 
 /**
@@ -94,9 +94,9 @@ exports.verifyEmail = catchAsync(async (req, res, next) => {
  */
 exports.signIn = catchAsync(async (req, res, next) => {
   const { email, password } = req.body;
-  if (!email || !password) {
-    return next(new AppError("Invalid data Input", 406));
-  }
+    if (!email || !password) {
+      return next(new AppError("Invalid data Input", 406));
+    }
   // find User
   const user = await User.findOne({ email: email }).select("+password");
   if (!user) {
@@ -319,14 +319,28 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
   if (!user) {
     return next(new AppError(errorMessages.RESOURCE_NOT_FOUND, 404));
   }
-  const token = optGenerator.generate();
-  user.resetToken = token;
-  user.resertTokenExpiration = Date.now() + 2 * 60 * 1000;
+
+  const verificationToken = crypto.randomBytes(32).toString('hex');
+  const encryptedVerificationToken = crypto
+    .createHash('sha256')
+    .update(verificationToken)
+    .digest('hex');
+
+  user.reset_token = encryptedVerificationToken;
+  user.reset_expire_at = Date.now() + 2 * 60 * 1000;
+
+  await sendEmail({
+    email : user.email,
+    subject : "Password Reset",
+    html : 
+    ` <h1>Password Reset</h1>
+      <p><a href="http://localhost:5000/user/reset/${verificationToken}">click here</a></p>
+    `
+  })
   await user.save();
   res.status(200).json({
     message: "Please enter the verification code been sent to your email",
   });
-  await mailTransport.emailVerification(token, email);
 });
 
 /*
@@ -340,10 +354,16 @@ exports.updatePassword = catchAsync(async (req, res, next) => {
     return next(new AppError("Invalid data Input", 406));
   }
 
+  const encryptedVerificationToken = crypto
+    .createHash('sha256')
+    .update(buffer)
+    .digest('hex');
+
   const user = await User.findOne({
-    resetToken: buffer,
-    resertTokenExpiration: { $gt: Date.now() },
+    reset_token: encryptedVerificationToken,
+    reset_expire_at: { $gt: Date.now() },
   });
+
   if (!user) {
     return next(new AppError(errorMessages.TOKEN_EXPIRED, 404));
   }
@@ -351,8 +371,9 @@ exports.updatePassword = catchAsync(async (req, res, next) => {
   const hash = await bcrypt.hash(password, 12);
 
   user.password = hash;
-  user.resetToken = undefined;
-  user.resertTokenExpiration = undefined;
+  user.reset_token = undefined;
+  user.reset_expire_at = undefined;
+  
   await user.save();
   res.status(200).json({ message: successMessages.RESOURCE_UPDATED });
 });
