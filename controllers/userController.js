@@ -7,17 +7,17 @@ const AppError = require("./../utils/appError");
 const { signAccessToken } = require("../utils/jwtTokenHelper");
 const errorMessages = require("../resources/errorMessages");
 const successMessages = require("../resources/successMessages");
-const optGenerator = require("../utils/otpGenerator");
 const { sendEmail } = require("../utils/email");
- 
+
 /*
  * Working with User Sign Up Form
  */
 exports.signUp = catchAsync(async (req, res, next) => {
   const { name, email, phone, password } = req.body;
-    if (!name || !email || !phone || !password) {
-      return next(new AppError("Invalid data Input", 406));
-    }
+
+  if (!name || !email || !phone || !password) {
+    return next(new AppError("Invalid data Input", 406));
+  }
 
   // Password encryption
   const hashPassword = await bcrypt.hash(password, 12);
@@ -25,19 +25,16 @@ exports.signUp = catchAsync(async (req, res, next) => {
     return;
   }
 
-  const verificationToken = crypto.randomBytes(32).toString('hex');
+  const verificationToken = crypto.randomBytes(32).toString("hex");
   const encryptedVerificationToken = crypto
-    .createHash('sha256')
+    .createHash("sha256")
     .update(verificationToken)
-    .digest('hex');
-
-  const mobileNumber = "+1" + phone;
-   
+    .digest("hex");
 
   const user = await User.create({
     name,
     email,
-    phone: mobileNumber,
+    phone,
     password: hashPassword,
     verification_token: encryptedVerificationToken,
     verification_expire_at: Date.now() + 2 * 60 * 1000,
@@ -47,15 +44,16 @@ exports.signUp = catchAsync(async (req, res, next) => {
     return next(new AppError(errorMessages.GENERAL, 406));
   }
   await sendEmail({
-    email : user.email,
-    subject : "Registration",
-    html : 
-    ` <h1>Welcome to Mobilfixes , ${user.name}</h1>
-      <p><a href="http://localhost:5000/user/email-verification/${verificationToken}">click here</a> & verify your email.</p>
-    `
-  })
-  res.status(200).json("A Verification code has been sent to your email");
-  
+    email: user.email,
+    subject: "Registration",
+    html: ` <h1>Welcome to Mobilfixes , ${user.name}</h1>
+      <p><a href="${process.env.APP_URL}/user/email-verification/${verificationToken}">click here</a> & verify your email.</p>
+    `,
+  });
+  res.status(200).json({
+    status: "success",
+    message: "we have send a link on your email for verification.",
+  });
 });
 
 /**
@@ -67,10 +65,11 @@ exports.verifyEmail = catchAsync(async (req, res, next) => {
   if (!token) {
     return next(new AppError("Invalid data Input", 406));
   }
+
   const encryptedVerificationToken = crypto
-    .createHash('sha256')
+    .createHash("sha256")
     .update(token)
-    .digest('hex');
+    .digest("hex");
 
   // find User
   const user = await User.findOne({
@@ -86,7 +85,10 @@ exports.verifyEmail = catchAsync(async (req, res, next) => {
   user.verification_expire_at = undefined;
 
   await user.save();
-  return res.status(200).json("Email has been successfully verified.");
+  return res.status(200).json({
+    status: "success",
+    message: "Email has been successfully verified.",
+  });
 });
 
 /*
@@ -94,30 +96,36 @@ exports.verifyEmail = catchAsync(async (req, res, next) => {
  */
 exports.signIn = catchAsync(async (req, res, next) => {
   const { email, password } = req.body;
-    if (!email || !password) {
-      return next(new AppError("Invalid data Input", 406));
-    }
+
+  if (!email || !password) {
+    return next(new AppError("Invalid data Input", 406));
+  }
+
   // find User
   const user = await User.findOne({ email: email }).select("+password");
+
   if (!user) {
     return next(new AppError(errorMessages.AUTH, 404));
   }
+
   // If User has blocked
   if (user.blockedAt && user.blockedAt !== null) {
     return next(new AppError(errorMessages.BLOCKED, 404));
   }
+
   // Password Matching
   const isMatch = await bcrypt.compare(password, user.password);
+
   if (!isMatch) {
     return next(new AppError(errorMessages.AUTH, 422));
   }
+
   // Token generate
   const accessToken = await signAccessToken(email, user._id);
-  // const refreshToken = await signRefreshToken(email, user._id);
 
   res.status(200).json({
+    status: "success",
     token: accessToken,
-    // refreshToken: refreshToken,
     user: {
       _id: user._id,
       userName: user.userName,
@@ -130,26 +138,35 @@ exports.signIn = catchAsync(async (req, res, next) => {
 /*
  *   Showing All Users
  */
-
 exports.index = catchAsync(async (req, res) => {
   const users = await User.find().limit(100).sort({ _id: -1 });
+
   if (users.length <= 0) {
     return next(new AppError(errorMessages.RESOURCE_NOT_FOUND, 404));
   }
-  res.status(200).json({ data: users });
+
+  res.status(200).json({ 
+    status: "success", 
+    data: users 
+  });
 });
 
 /*
  *   Delete a user
  */
 exports.delete = catchAsync(async (req, res, next) => {
-  const id = req.params.id;
+  const { id } = req.params;
+
   if (!id) {
     return next(new AppError("Invalid data Input", 406));
   }
 
   await User.findByIdAndDelete(id);
-  res.status(200).json({ message: errorMessages.RESOUCE_DELETED });
+
+  res.status(200).json({ 
+    status : "success",
+    message: errorMessages.RESOUCE_DELETED 
+  });
 });
 
 /*
@@ -178,10 +195,15 @@ exports.update = catchAsync(async (req, res, next) => {
   };
 
   const user = await User.findByIdAndUpdate(req.user._id, updateUser);
+
   if (!user) {
     res.status(404).json("User not found!");
   }
-  res.status(200).json("SuccessFull");
+
+  res.status(200).json({
+    status: "Success",
+    message: "Your request has complete successfully.",
+  });
 });
 
 /*
@@ -189,19 +211,13 @@ exports.update = catchAsync(async (req, res, next) => {
  */
 exports.addNewAddress = catchAsync(async (req, res, next) => {
   const customer = req.user;
-  const {
-    long,
-    lat,
-    addressLine1,
-    addressLine2,
-    city,
-    state,
-    zipcode,
-  } = req.body;
+  const { long, lat, addressLine1, addressLine2, city, state, zipcode } =
+    req.body;
 
   if (!addressLine1 || !addressLine2 || !city || !state || !zipcode) {
     return next(new AppError("Invalid data Input", 406));
   }
+
   const newAddress = {
     $push: {
       address: {
@@ -218,12 +234,17 @@ exports.addNewAddress = catchAsync(async (req, res, next) => {
 
   // Find User
   if (customer.address.length >= 3) {
-    return res.status(200).json({ message: "You can add only 3 addresses." });
+    return res
+      .status(200)
+      .json({ status: "Fail", message: "You can add only 3 addresses." });
   }
 
   await customer.update(newAddress);
 
-  return res.status(201).json({ message: successMessages.RESOURCE_CREATED });
+  return res.status(201).json({ 
+    status: "success",
+    message: successMessages.RESOURCE_CREATED 
+  });
 });
 
 /*
@@ -232,8 +253,12 @@ exports.addNewAddress = catchAsync(async (req, res, next) => {
 exports.showAddresses = catchAsync(async (req, res, next) => {
   const customer = req.user;
 
-  const customerAddress = await User.findById(customer._id).select("address");
-  return res.status(200).json(customerAddress);
+  const customerAddresses = await User.findById(customer._id).select("address");
+
+  res.status(200).json({
+    status: "success",
+    message: customerAddresses,
+  });
 });
 
 /*
@@ -242,15 +267,8 @@ exports.showAddresses = catchAsync(async (req, res, next) => {
 exports.updateAddress = catchAsync(async (req, res, next) => {
   const customer = req.user;
   const { addressId } = req.query;
-  const {
-    long,
-    lat,
-    addressLine1,
-    addressLine2,
-    city,
-    state,
-    zipcode,
-  } = req.body;
+  const { long, lat, addressLine1, addressLine2, city, state, zipcode } =
+    req.body;
 
   if (
     !addressId ||
@@ -284,7 +302,10 @@ exports.updateAddress = catchAsync(async (req, res, next) => {
     updateAddress
   );
 
-  return res.status(200).json({ message: successMessages.RESOURCE_UPDATED });
+  res.status(200).json({ 
+    status: "success",
+    message: successMessages.RESOURCE_UPDATED 
+  });
 });
 
 /*
@@ -302,7 +323,11 @@ exports.deleteAddress = catchAsync(async (req, res, next) => {
   await User.findByIdAndUpdate(customer._id, {
     $pull: { address: { _id: addressId } },
   });
-  res.status(200).json({ message: successMessages.RESOURCE_DELETED });
+
+  res.status(200).json({ 
+    status: "success",
+    message: successMessages.RESOURCE_DELETED 
+  });
 });
 
 /*
@@ -320,25 +345,27 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
     return next(new AppError(errorMessages.RESOURCE_NOT_FOUND, 404));
   }
 
-  const verificationToken = crypto.randomBytes(32).toString('hex');
+  const verificationToken = crypto.randomBytes(32).toString("hex");
   const encryptedVerificationToken = crypto
-    .createHash('sha256')
+    .createHash("sha256")
     .update(verificationToken)
-    .digest('hex');
+    .digest("hex");
 
   user.reset_token = encryptedVerificationToken;
   user.reset_expire_at = Date.now() + 2 * 60 * 1000;
 
-  await sendEmail({
-    email : user.email,
-    subject : "Password Reset",
-    html : 
-    ` <h1>Password Reset</h1>
-      <p><a href="http://localhost:5000/user/reset/${verificationToken}">click here</a></p>
-    `
-  })
   await user.save();
+
+  await sendEmail({
+    email: user.email,
+    subject: "Password Reset",
+    html: ` <h1>Password Reset</h1>
+      <p><a href="${process.env.APP_URL}/user/reset/${verificationToken}">click here</a></p>
+    `,
+  });
+
   res.status(200).json({
+    status: "success",
     message: "Please enter the verification code been sent to your email",
   });
 });
@@ -347,17 +374,21 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
  *   Create a new password and update previous one
  */
 exports.updatePassword = catchAsync(async (req, res, next) => {
-  const buffer = req.params.buffer;
-  const password = req.body.password;
+  const { buffer } = req.params;
+  const { password, confirmPassword } = req.body;
 
-  if (!buffer || !password) {
+  if (!buffer || !password || !confirmPassword) {
     return next(new AppError("Invalid data Input", 406));
   }
 
+  if (password === confirmPassword) {
+    return next(new AppError("Match both password", 406));
+  }
+
   const encryptedVerificationToken = crypto
-    .createHash('sha256')
+    .createHash("sha256")
     .update(buffer)
-    .digest('hex');
+    .digest("hex");
 
   const user = await User.findOne({
     reset_token: encryptedVerificationToken,
@@ -373,7 +404,10 @@ exports.updatePassword = catchAsync(async (req, res, next) => {
   user.password = hash;
   user.reset_token = undefined;
   user.reset_expire_at = undefined;
-  
+
   await user.save();
-  res.status(200).json({ message: successMessages.RESOURCE_UPDATED });
+  res.status(200).json({
+    status: "success", 
+    message: successMessages.RESOURCE_UPDATED 
+  });
 });
