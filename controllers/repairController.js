@@ -3,6 +3,7 @@ const Repair = require("../models/repairModel");
 const Device = require("../models/deviceModel");
 const catchAsync = require("../utils/catchAsync");
 const AppError = require("../utils/appError");
+const { errorMessages } = require("./../resources/errorMessages");
 const mongoose = require("mongoose");
 
 /*
@@ -10,16 +11,21 @@ const mongoose = require("mongoose");
  */
 exports.store = catchAsync(async (req, res, next) => {
   const { title, price, device, image, services } = req.body;
-  if (!title || !price || !image) {
-    return next(new AppError(`Fill all required field.`, 400));
+
+  if (!title || !price) {
+    return next(new AppError(`Invalid Input Data.`, 406));
   }
-  const doc = new Repair({ title, price, device, services, image });
-  const repair = await doc.save();
+
+  const repair = await Repair.create({ title, price, device, services, image });
 
   if (!repair) {
-    return next(new AppError(`Server Error.`, 500));
+    return next(new AppError(errorMessages.GENERAL, 406));
   }
-  res.status(201).json(repair);
+
+  res.status(201).json({
+    status: "success",
+    data: repair,
+  });
 });
 
 /*
@@ -31,13 +37,18 @@ exports.index = catchAsync(async (req, res, next) => {
   if (repairs.length <= 0) {
     return next(new AppError(`No Repair There!.`, 404));
   }
-  res.status(200).json({ data: repairs });
+
+  res.status(200).json({
+    status: "success",
+    data: repairs,
+  });
 });
 /*
  *   Fetch Repair
  */
 exports.show = catchAsync(async (req, res, next) => {
   const { repairId } = req.params;
+
   if (!repairId) {
     return next(new AppError("Invalid data Input", 406));
   }
@@ -47,7 +58,11 @@ exports.show = catchAsync(async (req, res, next) => {
   if (!repair) {
     return next(new AppError(`Repair not found.`, 404));
   }
-  res.status(200).json({ data: repair });
+
+  res.status(200).json({
+    status: "success",
+    data: repair,
+  });
 });
 
 /*
@@ -62,16 +77,22 @@ exports.update = catchAsync(async (req, res, next) => {
   }
 
   const repair = await Repair.findByIdAndUpdate(repairId, {
-    title,
-    price,
-    services,
-    image,
+    $set: {
+      title,
+      price,
+      services,
+      image,
+    },
   });
 
   if (!repair) {
     return next(new AppError(`Repair not found.`, 404));
   }
-  res.status(200).json("Resource Update successfull.");
+
+  res.status(200).json({
+    status: "success",
+    message: "Resource Update successfull.",
+  });
 });
 
 /*
@@ -109,6 +130,7 @@ exports.findRepairs = catchAsync(async (req, res, next) => {
  */
 exports.delete = catchAsync(async (req, res, next) => {
   const repairId = req.params.repairId;
+
   if (!repairId) {
     return next(new AppError("Invalid data Input", 406));
   }
@@ -118,6 +140,10 @@ exports.delete = catchAsync(async (req, res, next) => {
   if (!repair) {
     return next(new AppError(`Repair not found.`, 404));
   }
+
   await repair.delete();
-  res.status(200).json({ message: "Deleted." });
+  res.status(200).json({ 
+    status: "success",
+    message: "Deleted." 
+  });
 });

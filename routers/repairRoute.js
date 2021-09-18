@@ -8,51 +8,22 @@ const cache = require("../middleware/cacheMiddleware/cache");
 // Define Express router poperty
 const router = express.Router();
 
-/*
- *   Store Repair, Only Admin can access this routes
- */
-router.post(
-  "/repair",
-  [isLoggedIn, userAuth.checkAdmin],
-  repairController.store
-);
+router
+  .route("/repair")
+  .post([isLoggedIn, userAuth.checkAdmin], repairController.store)
+  .get([cache.cacheMiddleware(30)], repairController.index);
 
-/*
- *   Fetch All Repairs
- */
-router.get("/repair", [cache.cacheMiddleware(30)], repairController.index);
+router
+  .route("/repair/:repairId")
+  .get([isLoggedIn], repairController.show)
+  .patch([isLoggedIn, userAuth.checkAdmin], repairController.update)
+  .delete([isLoggedIn, userAuth.checkAdmin], repairController.delete);
 
-/*
- *   Fetch  Repair
- */
-router.get("/repair/:repairId", [isLoggedIn], repairController.show);
-
-/*
- *   Update  Repair
- */
-router.patch(
-  "/repair/:repairId",
-  [isLoggedIn],
-  repairController.update
-);
-
-/*
- *   Find Repair By Device
- *   device query parameter
- */
+// Find Repair By Device
 router.get(
   "/repair/device/:device",
   [cache.cacheMiddleware(30)],
   repairController.findRepairs
-);
-
-/*
- *   Delete Repair
- */
-router.delete(
-  "/repair/:repairId",
-  [isLoggedIn, userAuth.checkAdmin],
-  repairController.delete
 );
 
 // Export Router
