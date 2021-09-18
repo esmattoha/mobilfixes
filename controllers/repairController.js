@@ -3,7 +3,7 @@ const Repair = require("../models/repairModel");
 const Device = require("../models/deviceModel");
 const catchAsync = require("../utils/catchAsync");
 const AppError = require("../utils/appError");
-const { errorMessages } = require("./../resources/errorMessages");
+const errorMessages  = require("./../resources/errorMessages");
 const mongoose = require("mongoose");
 
 /*

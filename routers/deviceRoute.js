@@ -9,50 +9,19 @@ const repairController = require("./../controllers/repairController");
 // Define Express router poperty
 const router = express.Router();
 
-/*
- *  Store Device
- */
-router.post(
-  "/device",
-  [isLoggedIn, userAuth.checkAdmin],
-  deviceController.store
-);
 
-/*
- * Update device
- */
-router.patch(
-  "/device/:id",
-  [isLoggedIn, userAuth.checkAdmin],
-  deviceController.update
-);
+router
+  .route("/device")
+  .post([isLoggedIn, userAuth.checkAdmin], deviceController.store)
+  .get([cache.cacheMiddleware(30)], deviceController.index);
 
-/*
- *  Fetch Device
- */
-router.get("/device", [cache.cacheMiddleware(30)], deviceController.index);
+router
+  .route("/device/:deviceId")
+  .patch([isLoggedIn, userAuth.checkAdmin], deviceController.update)
+  .get([cache.cacheMiddleware(30)], deviceController.show)
+  .delete([isLoggedIn, userAuth.checkAdmin], deviceController.delete);
 
-/*
- *  Fetch Device
- */
-router.get(
-  "/device/:deviceId",
-  [cache.cacheMiddleware(30)],
-  deviceController.show
-);
-
-/*
- *  Delete Device
- */
-router.delete(
-  "/device/:deviceId",
-  [isLoggedIn, userAuth.checkAdmin],
-  deviceController.delete
-);
-
-/*
- *  Fetch Repairs of device
- */
+// Fetch Repairs of device
 router.get(
   "/device/:device/repairs",
   [isLoggedIn],
