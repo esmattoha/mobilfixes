@@ -36,15 +36,17 @@ exports.store = catchAsync(async (req, res, next) => {
 
   // 
   const customer = req.user._id;
+  const metaData = await getMetaData(req);
   let orderItems;
   let totalOrderAmount;
+
   if (items) {
     orderItems = await getOrderItems(items);
     totalOrderAmount = getTotalAmount(orderItems);
   }else{
     orderItems = await productItem(req);
   }
-  const metaData = await getMetaData(req);
+  
   
 
   // Save Order data
@@ -70,7 +72,7 @@ exports.store = catchAsync(async (req, res, next) => {
     return next(new AppError(`Order could not be created`, 406));
   }
 
-  return res.status(201).json({
+  res.status(201).json({
     status: "success",
     requirePayment: createdOrder.service == "we-come-to-you",
     data: createdOrder,
@@ -90,7 +92,6 @@ const getOrderItems = async (items) => {
   return Promise.resolve(repairItemsData);
 };
 
-module.exports = { getOrderItems};
 
 /**
  * 
@@ -112,8 +113,6 @@ const productItem = async (req) => {
     questions: product.questions,
   });
 };
-
-module.exports = { productItem };
 
 /**
  *
@@ -144,8 +143,6 @@ const getMetaData = async (req) => {
     model: modelData,
   });
 };
-
-module.exports = {getMetaData} ;
 
 /*
  *  Customer's bookings
@@ -226,12 +223,16 @@ exports.index = catchAsync(async (req, res, next) => {
  */
 exports.show = catchAsync(async (req, res, next) => {
   const { id } = req.params;
+
   const order = await Order.findById(id).populate("payments");
+
   if (!order) {
     return next(new AppError(errorMessages.RESOURCE_NOT_FOUND, 404));
   }
+
   res.status(200).json({ status: "success", data: order });
 });
+
 /*
  *   Update Booking
  */
@@ -299,9 +300,11 @@ exports.delete = catchAsync(async (req, res, next) => {
   const orderId = id;
 
   const doc = await Order.findByIdAndDelete(orderId);
+
   if (!doc) {
     return next(new AppError(errorMessages.RESOURCE_NOT_FOUND, 404));
   }
+
   res.status(200).json({ message: "Deleted" });
 });
 
@@ -315,9 +318,11 @@ exports.search = catchAsync(async (req, res, next) => {
   if (booking.length <= 0) {
     return next(new AppError(`The selected date is unavailable`, 404));
   }
+
   const booked = await booking.map((p) => {
     return p.appointmentTime;
   });
+  
   res.status(200).json(booked);
 });
 
@@ -376,3 +381,4 @@ exports.appointmentDates = catchAsync(async (req, res, next) => {
   ]);
   res.status(200).json(appointmentDates);
 });
+

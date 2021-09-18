@@ -10,64 +10,37 @@ const shipmentController = require("../controllers/shipmentController");
 // Define Express router poperty
 const router = express.Router();
 
-/*
- *   Loging Check & Store Booking
- */
-router.post("/order", [bookingAuth.bookingMiddlleware], orderController.store);
+router
+  .route("/order")
+  .post([bookingAuth.bookingMiddlleware], orderController.store)
+  .get(
+    [isLoggedIn, userAuth.checkAdmin, [cache.cacheMiddleware(30)]],
+    orderController.index
+  );
 
-/*
- *  Shows customers bookings
- */
+
+router
+  .route("/order/:id")
+  .get([isLoggedIn], orderController.show)
+  .patch([isLoggedIn, userAuth.checkAdmin], orderController.update)
+  .delete([isLoggedIn, userAuth.checkAdmin], orderController.delete);
+
+
+// Shows customers bookings
 router.get(
   "/order/customer-bookings",
   [isLoggedIn],
   orderController.showCustomerBookings
 );
-/*
- *   Loging Check & Fetch All Booking
- */
-router.get(
-  "/order",
-  [isLoggedIn, userAuth.checkAdmin, [cache.cacheMiddleware(30)]],
-  orderController.index
-);
 
-/*
- *   Loging Check & Fetch Booking
- */
-router.get("/order/:id", [isLoggedIn], orderController.show);
-
-/*
- *   Loging Check & Update Booking
- */
-router.patch(
-  "/order/:id",
-  [isLoggedIn, userAuth.checkAdmin],
-  orderController.update
-);
-
-
-/*
- *   Loging Check & Delete Booking
- */
-router.delete(
-  "/order/:id",
-  [isLoggedIn, userAuth.checkAdmin],
-  orderController.delete
-);
-
-/*
- *   Search a date is available or not
- */
+// Search a date is available or not
 router.get(
   "/booked-dates",
   [cache.cacheMiddleware(30)],
   orderController.appointmentDates
 );
 
-/**
- * 
- */
+//
 router.get(
   "/order/:id/shipment",
   [isLoggedIn, [cache.cacheMiddleware(30)]],
