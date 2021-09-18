@@ -7,12 +7,12 @@ const userAuth = require("../middleware/userAuthMiddleware");
 // Define Express router poperty
 const router = express.Router();
 
-//  store the user cancelation
-router.post(
-  "/cancelled-order",
-  [isLoggedIn],
-  cancelationRequestesController.store
-);
+
+router.route("/cancelled-order")
+.post([isLoggedIn],cancelationRequestesController.store)
+.get( [isLoggedIn, userAuth.checkAdmin],cancelationRequestesController.index)
+.patch([isLoggedIn, userAuth.checkAdmin],cancelationRequestesController.update)
+.delete([isLoggedIn, userAuth.checkAdmin],cancelationRequestesController.delete);
 
 // show user cancelations
 router.get(
@@ -21,26 +21,6 @@ router.get(
     cancelationRequestesController.showUserCancelations
   );
 
-// Show All Cancelations
-router.get(
-  "/cancelled-orders",
-  [isLoggedIn, userAuth.checkAdmin],
-  cancelationRequestesController.index
-);
-
-// Update Cancelation 
-router.patch(
-  "/cancelled-order",
-  [isLoggedIn, userAuth.checkAdmin],
-  cancelationRequestesController.update
-);
-
-// Delete  Cancelation
-router.delete(
-  "/cancelled-order",
-  [isLoggedIn, userAuth.checkAdmin],
-  cancelationRequestesController.delete
-);
 
 // Export Router
 module.exports = router;
