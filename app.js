@@ -9,6 +9,8 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const env = require("dotenv");
+const path = require("path");
 const rateLimit = require("express-rate-limit");
 
 // Custom Error Calss and Error Handler
@@ -27,7 +29,6 @@ const bookRouter = require("./routers/orderRoute");
 const shipmentRouter = require("./routers/shipmentRoute");
 const paymentRouter = require("./routers/paymentRoute");
 const cancelationRoute = require("./routers/cancelationRequestesRoute");
-const authRoute = require("./routers/authRoute");
 const dashboardRoute = require("./routers/dashboardRoute");
 const productRoute = require("./routers/productRoute");
 
@@ -36,6 +37,9 @@ const adminUserRouter = require("./routers/admin/user");
 
 // Define Express function as a app object
 const app = express();
+
+// ENV configuration
+env.config({ path: path.resolve(__dirname, './.env') });
 
 // Set upload as a static directory
 app.use("/upload", express.static("upload"));
@@ -75,12 +79,12 @@ app.use(cors(corsOptions));
 (async () => {
   try {
     await mongoose.connect(process.env.MONGODB_URL, {
-      useNewUrlParser: true, useUnifiedTopology: true
+      useNewUrlParser: true
     });
     console.log("You are successfully connect with MongoDb Database");
   } catch (error) {
     console.log("App starting error: ", error.stack);
-    process.exit(1);
+    // process.exit(1);
   }
 })();
 
@@ -105,7 +109,6 @@ app.use(bookRouter);
 app.use(shipmentRouter);
 app.use(paymentRouter);
 app.use(cancelationRoute);
-app.use(authRoute);
 app.use(dashboardRoute);
 app.use(productRoute);
 

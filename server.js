@@ -7,8 +7,12 @@
 
 // Import Dependencies
 const env = require("dotenv");
+const path = require('path');
+
+
 //Reseters .env by default
-env.config();
+env.config({ path: path.resolve(__dirname, './.env') });
+
 //IMPORTING app instamce
 const app = require("./app");
 

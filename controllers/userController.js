@@ -50,7 +50,7 @@ exports.signUp = catchAsync(async (req, res, next) => {
       <p><a href="${process.env.APP_URL}/user/email-verification/${verificationToken}">click here</a> & verify your email.</p>
     `,
   });
-  res.status(200).json({
+  res.status(201).json({
     status: "success",
     message: "we have send a link on your email for verification.",
   });
