@@ -13,26 +13,28 @@ beforeAll(async () => {
   });
 });
 
-// describe("POST /user/signup", () => {
-//   test("it should return a status code & Object", async()=>{
-//     const data = {
-//       name : "Dipu",
-//       email : "mondal@gmail.com",
-//       phone : "7718533953",
-//       password : "dipu_@"
-//     }
+// Test : POST /user/signup
+describe("POST /user/signup", () => {
+  test.only("it should return a status code & Object", async()=>{
+    const data = {
+      name : "Dipu",
+      email : "alex@gmail.com",
+      phone : "7718533953",
+      password : "dipu_@"
+    }
 
-//     const response = await request(app).post("/user/signup").send(data);
+    const response = await request(app).post("/user/signup").send(data);
 
-//     expect(response.statusCode).toBe(201);
-//     expect(response.statusCode).not.toBe(406);
-//     expect(response.body).toMatchObject({
-//       status: "success",
-//       message: "we have send a link on your email for verification.",
-//     })
-//   })
-// });
+    expect(response.statusCode).toBe(201);
+    expect(response.statusCode).not.toBe(406);
+    expect(response.body).toMatchObject({
+      status: "success",
+      message: "we have send a link on your email for verification.",
+    })
+  })
+});
 
+// Test : POST /user/login
 describe("POST /user/login", () => {
   test("It should return 200 status code", async () => {
     const response = await request(app).post("/user/login").send({
@@ -45,39 +47,151 @@ describe("POST /user/login", () => {
   });
 });
 
-describe("POST /user/me", () => {
-  test("It should return 401 status code", async () => {
-    const response = await request(app).get("/user/me");
+/**
+ * 
+ */
+describe("Admin Authorization Route checking", () => {
+  beforeEach(async () => {
+    const response = await request(app).post("/user/login").send({
+      email: "alex@gmail.com",
+      password: "dipu_@",
+    });
 
-    expect(response.statusCode).toBe(401);
-    expect(response.body).toMatchObject({ message: "Unauthorized Request" });
+    auth.token = response.body.token;
   });
-});
 
-describe("POST /user/reset", () => {
-  test("It should return status code & Object ", async () => {
+  // Test : DELETE /user/delete/:id
+  test("DELETE /user/delete/:id , It Should return status code", async () => {
     const res = await request(app)
-      .post("/user/reset")
-      .send({ email: "alex@gmail.com" });
+      .delete("/user/delete/6144bb9bdfef8c29c1ff694a")
+      .set("Authorization", "Bearer " + auth.token);
 
     expect(res.statusCode).toBe(200);
-    expect(res.statusCode).not.toBe(406);
-    expect(res.body).toMatchObject({
-      status: "success",
-      message: "Please enter the verification code been sent to your email",
-    });
+    expect(res.statusCode).not.toBe(401);
+    expect(res.body).not.toMatchObject({ message: "Unauthorized Request" });
+    expect(res.body).not.toMatchObject({ message: "Unauthenticated!" });
   });
 });
 
-// describe("POST /user/reset/:buffer", () => {
-//   test("It should return status code & Object", async () => {
-//     const res = await request(app)
-//       .post("/user/reset/:buffer")
-//       .send({ password: "dipu_@" });
+/**
+ * 
+ */
+describe("Authorization Route checking", () => {
+  beforeEach(async () => {
+    const response = await request(app).post("/user/login").send({
+      email: "alex@gmail.com",
+      password: "dipu_@",
+    });
 
-//     console.log(res.body);
-//   });
-// });
+    auth.token = response.body.token;
+  });
+
+  // Test : GET /user/me
+  test("GET /user/me , It Should return status code", async () => {
+    const res = await request(app)
+      .get("/user/me")
+      .set("Authorization", "Bearer " + auth.token);
+
+    expect(res.statusCode).toBe(200);
+    expect(res.statusCode).not.toBe(401);
+    expect(res.body).not.toMatchObject({ message: "Unauthorized Request" });
+  });
+
+  // Test : PATCH /user/me
+  test("PATCH /user/me , It should return status code & message", async () => {
+    const res = await request(app)
+      .patch("/user/me")
+      .send({
+        name: "Dipu",
+        email: "alex@gmail.com",
+        phone: "7718533953",
+      })
+      .set("Authorization", "Bearer " + auth.token);
+
+    expect(res.statusCode).toBe(200);
+    expect(res.statusCode).not.toBe(401);
+    expect(res.statusCode).not.toBe(406);
+    expect(res.statusCode).not.toBe(404);
+    expect(res.body).not.toMatchObject({ message: "Unauthorized Request" });
+    expect(res.body).toMatchObject({
+      status: "Success",
+      message: "Your request has complete successfully.",
+    });
+  });
+
+  // Test : POST /user/address
+  test("POST /user/address , It should return status code & message", async () => {
+    const address = {
+      addressLine1: "Vadiriyapara",
+      addressLine2: "Domkal",
+      city: "Murshidabad",
+      state: "West Bengal",
+      zipcode: 742133,
+    };
+
+    const res = await request(app)
+      .post("/user/address")
+      .send(address)
+      .set("Authorization", "Bearer " + auth.token);
+
+    expect(res.statusCode).toBe(201);
+    expect(res.statusCode).not.toBe(401);
+    expect(res.statusCode).not.toBe(406);
+
+    expect(res.body).not.toMatchObject({ message: "Unauthorized Request" });
+    expect(res.body).toMatchObject({
+      status: "success",
+      message: "Resource created",
+    });
+  });
+
+  // Test : GET /user/address
+  test("GET /user/address , It should return status code & status", async () => {
+    const res = await request(app)
+      .get("/user/address")
+      .set("Authorization", "Bearer " + auth.token);
+
+    expect(res.statusCode).toBe(200);
+    expect(res.statusCode).not.toBe(401);
+    expect(res.body).not.toMatchObject({ message: "Unauthorized Request" });
+    expect(res.body.status).toBe("success");
+  });
+
+  // Test : PATCH /user/address
+  test("PATCH /user/address ,  It should return status code & status", async () => {
+    const res = await request(app)
+      .patch("/user/address?addressId=61499ec9554066b35fb4e686")
+      .send({
+        addressLine1: "Vadiriyapara1",
+        addressLine2: "Domkal1",
+        city: "Murshidabad1",
+        state: "West Bengal1",
+        zipcode: 742133,
+      })
+      .set("Authorization", "Bearer " + auth.token);
+
+    expect(res.statusCode).toBe(200);
+    expect(res.statusCode).not.toBe(401);
+    expect(res.statusCode).not.toBe(406);
+    expect(res.body).not.toMatchObject({ message: "Unauthorized Request" });
+    expect(res.body.status).toBe("success");
+  });
+
+  // Test : DELETE /user/address
+  test("DELETE /user/address ,  It should return status code & status", async () => {
+    const res = await request(app)
+      .delete("/user/address?addressId=61499ec9554066b35fb4e686")
+      .set("Authorization", "Bearer " + auth.token);
+
+    expect(res.statusCode).toBe(200);
+    expect(res.statusCode).not.toBe(401);
+    expect(res.statusCode).not.toBe(406);
+    expect(res.body).not.toMatchObject({ message: "Unauthorized Request" });
+    expect(res.body.status).toBe("success");
+  });
+});
+
+
 
 //
 afterAll(async () => {
