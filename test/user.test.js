@@ -15,7 +15,7 @@ beforeAll(async () => {
 
 // Test : POST /user/signup
 describe("POST /user/signup", () => {
-  test.only("it should return a status code & Object", async()=>{
+  test("it should return a status code & Object", async()=>{
     const data = {
       name : "Dipu",
       email : "alex@gmail.com",
@@ -33,6 +33,17 @@ describe("POST /user/signup", () => {
     })
   })
 });
+
+// Test : POST /user/email-verification/:token
+describe("POST /user/email-verification/:token", () => {
+  test("It should return 200 status code", async () => {
+    const res = await request(app).post("/user/email-verification/c8960581aa4c7d92c85530beb430f112cbe639bc4c30f5a8026714e186764e6c")
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body.status).toBe("success");
+  });
+});
+
 
 // Test : POST /user/login
 describe("POST /user/login", () => {
