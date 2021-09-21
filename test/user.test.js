@@ -203,6 +203,27 @@ describe("Authorization Route checking", () => {
 });
 
 
+describe("POST /user/reset, " , ()=>{
+  test("It should return a status code", async()=>{
+    const response = await request(app).post("/user/reset").send({ email : "alex@gmail.com"});
+
+    expect(response.statusCode).toBe(200);
+
+  }, 30000)
+})
+
+describe("POST /user/reset/:buffer, " , ()=>{
+  test("It should return a status code", async()=>{
+    const res = await request(app).post("/user/reset/899e5686c3ddd47ddb799abdab13c4460603c350fe3f46a60441cb8ea72f84a7").send({
+      password: "mondal_@",
+      confirmPassword: "mondal_@"
+    });
+
+    console.log(res.body);
+    expect(res.statusCode).toBe(200);
+    expect(res.statusCode).not.toBe(406);
+  }, 30000)
+})
 
 //
 afterAll(async () => {

@@ -352,7 +352,7 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
     .digest("hex");
 
   user.reset_token = encryptedVerificationToken;
-  user.reset_expire_at = Date.now() + 2 * 60 * 1000;
+  user.reset_expire_at = Date.now() + 10 * 60 * 1000;
 
   await user.save();
 
@@ -377,12 +377,8 @@ exports.updatePassword = catchAsync(async (req, res, next) => {
   const { buffer } = req.params;
   const { password, confirmPassword } = req.body;
 
-  if (!buffer || !password || !confirmPassword) {
+  if ((!buffer || !password || !confirmPassword) && (password === confirmPassword)) {
     return next(new AppError("Invalid data Input", 406));
-  }
-
-  if (password === confirmPassword) {
-    return next(new AppError("Match both password", 406));
   }
 
   const encryptedVerificationToken = crypto
