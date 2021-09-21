@@ -1,6 +1,7 @@
 const request = require("supertest");
 const mongoose = require("mongoose");
 const app = require("../app");
+const bcrypt = require("bcrypt");
 const crypto = require("crypto");
 
 let auth = {};
@@ -13,16 +14,23 @@ beforeAll(async () => {
 });
 
 // describe("POST /user/signup", () => {
-//   test("It should return a status Code", async () => {
-//     const response = await request(app).post("/user/signup").send({
-//       name: "Dipu",
-//       email: "mondal@gmail.com",
-//       phone: "7718533953",
-//       password: "dipu_@",
-//     });
+//   test("it should return a status code & Object", async()=>{
+//     const data = {
+//       name : "Dipu",
+//       email : "mondal@gmail.com",
+//       phone : "7718533953",
+//       password : "dipu_@"
+//     }
+
+//     const response = await request(app).post("/user/signup").send(data);
 
 //     expect(response.statusCode).toBe(201);
-//   });
+//     expect(response.statusCode).not.toBe(406);
+//     expect(response.body).toMatchObject({
+//       status: "success",
+//       message: "we have send a link on your email for verification.",
+//     })
+//   })
 // });
 
 describe("POST /user/login", () => {
@@ -46,7 +54,30 @@ describe("POST /user/me", () => {
   });
 });
 
+describe("POST /user/reset", () => {
+  test("It should return status code & Object ", async () => {
+    const res = await request(app)
+      .post("/user/reset")
+      .send({ email: "alex@gmail.com" });
 
+    expect(res.statusCode).toBe(200);
+    expect(res.statusCode).not.toBe(406);
+    expect(res.body).toMatchObject({
+      status: "success",
+      message: "Please enter the verification code been sent to your email",
+    });
+  });
+});
+
+// describe("POST /user/reset/:buffer", () => {
+//   test("It should return status code & Object", async () => {
+//     const res = await request(app)
+//       .post("/user/reset/:buffer")
+//       .send({ password: "dipu_@" });
+
+//     console.log(res.body);
+//   });
+// });
 
 //
 afterAll(async () => {
