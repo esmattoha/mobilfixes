@@ -98,7 +98,7 @@ exports.update = catchAsync(async (req, res, next) => {
 /*
  *   Choose Device to find Repairs
  */
-exports.findRepairs = catchAsync(async (req, res, next) => {
+exports.findDevices = catchAsync(async (req, res, next) => {
   const { device } = req.params;
   const { service } = req.query;
 
@@ -122,7 +122,7 @@ exports.findRepairs = catchAsync(async (req, res, next) => {
   if (repairs.length <= 0) {
     return next(new AppError(`No Repair available for this device.`, 404));
   }
-  res.json({ data: { device: deviceInfo, repairs } });
+  res.status(200).json({ data: { device: deviceInfo, repairs } });
 });
 
 /*

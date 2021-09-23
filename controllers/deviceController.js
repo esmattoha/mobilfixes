@@ -1,4 +1,5 @@
 const Device = require("../models/deviceModel");
+const Repair = require("../models/repairModel");
 const catchAsync = require("../utils/catchAsync");
 const AppError = require("../utils/appError");
 const errorMessages = require("../resources/errorMessages");
@@ -125,14 +126,14 @@ exports.findRepairs = catchAsync(async (req, res, next) => {
   }
 
   const repairs = await Repair.find({
-    device: mongoose.Types.ObjectId(device),
+    device: device,
   });
 
   if (repairs.length <= 0) {
     return next(new AppError(`No Repair available for this device.`, 404));
   }
 
-  res.json({ data: { device: deviceInfo, repairs } });
+  res.status(200).json({ data: { device: deviceInfo, repairs } });
 });
 
 /*

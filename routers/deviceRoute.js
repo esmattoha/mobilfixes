@@ -4,16 +4,15 @@ const deviceController = require("../controllers/deviceController");
 const { isLoggedIn } = require("../middleware/checkAuthMiddleware");
 const userAuth = require("../middleware/userAuthMiddleware");
 const cache = require("../middleware/cacheMiddleware/cache");
-const repairController = require("./../controllers/repairController");
 
 // Define Express router poperty
 const router = express.Router();
-
 
 router
   .route("/device")
   .post([isLoggedIn, userAuth.checkAdmin], deviceController.store)
   .get([cache.cacheMiddleware(30)], deviceController.index);
+
 
 router
   .route("/device/:deviceId")
@@ -25,8 +24,9 @@ router
 router.get(
   "/device/:device/repairs",
   [isLoggedIn],
-  repairController.findRepairs
+  deviceController.findRepairs
 );
+
 
 // Export Router
 module.exports = router;

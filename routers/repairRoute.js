@@ -23,7 +23,7 @@ router
 router.get(
   "/repair/device/:device",
   [cache.cacheMiddleware(30)],
-  repairController.findRepairs
+  repairController.findDevices
 );
 
 // Export Router
