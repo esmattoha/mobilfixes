@@ -18,6 +18,7 @@ router
     orderController.index
   );
 
+router.get("/order/customer-bookings", [isLoggedIn], orderController.showCustomerBookings);
 
 router
   .route("/order/:id")
@@ -26,19 +27,13 @@ router
   .delete([isLoggedIn, userAuth.checkAdmin], orderController.delete);
 
 
-// Shows customers bookings
-router.get(
-  "/order/customer-bookings",
-  [isLoggedIn],
-  orderController.showCustomerBookings
-);
-
 // Search a date is available or not
 router.get(
   "/booked-dates",
   [cache.cacheMiddleware(30)],
   orderController.appointmentDates
 );
+
 
 //
 router.get(

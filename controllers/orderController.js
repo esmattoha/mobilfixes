@@ -147,9 +147,7 @@ const getMetaData = async (req) => {
 /*
  *  Customer's bookings
  */
-exports.showCustomerBookings = catchAsync(async (req, res, next) => {
-  // return res.json({ good: "res" });
-
+exports.showCustomerBookings = catchAsync(async(req, res, next) =>{
   const { limit } = req.query;
   const customer = req.user._id;
 
@@ -183,7 +181,7 @@ exports.showCustomerBookings = catchAsync(async (req, res, next) => {
     pageCount: Math.floor(totalBookings / (limit || 10)) + 1,
     data: customerBookings,
   });
-});
+})
 
 /*
  *   Fetch All Bookings
@@ -253,12 +251,13 @@ exports.update = catchAsync(async (req, res, next) => {
 
   if (status === "completed") {
     order.deliveredAt = Date.now();
+    res.status(200).json({ message: "Successfull" });
   }
 
   if (status == "cancelled") {
     // Charge the card
     await order.save();
-    return res.status(200).json({ message: "Successfull" });
+    res.status(200).json({ message: "Successfull" });
   }
 
   if (!order.customer.stripeId) {
