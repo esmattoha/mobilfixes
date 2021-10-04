@@ -13,7 +13,7 @@ const orderSchema = new Schema(
     },
     type: {
       type: String,
-      enum: ["appointment", "order", "buy"],
+      enum: ["appointment", "order", "sell"],
     },
     metaData: {
       device: Object,
@@ -45,7 +45,7 @@ const orderSchema = new Schema(
           type: Number,
           required: [true, "Price is required."],
         },
-        variations: Object,
+        variations: Array,
         condition : Object,
         questions : Array
       },

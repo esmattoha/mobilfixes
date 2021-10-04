@@ -38,11 +38,11 @@ exports.store = catchAsync(async (req, res, next) => {
   const customer = req.user._id;
   const metaData = await getMetaData(req);
   let orderItems;
-  let totalOrderAmount;
+  let totalAmount;
 
   if (items) {
     orderItems = await getOrderItems(items);
-    totalOrderAmount = getTotalAmount(orderItems);
+    totalAmount = getTotalAmount(orderItems);
   }else{
     orderItems = await productItem(req);
   }
@@ -60,7 +60,7 @@ exports.store = catchAsync(async (req, res, next) => {
     shippingAddress,
     billingAddress,
     customerNotes,
-    totalAmount: totalOrderAmount ? totalOrderAmount : productPrice,
+    totalAmount: totalAmount ? totalAmount : productPrice,
     service,
     appointmentTime,
     status: service == "we-come-to-you" ? "hold" : "processing",
