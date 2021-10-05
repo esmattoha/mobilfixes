@@ -8,6 +8,7 @@ const router = express.Router();
 router
   .route("/product")
   .get(productController.index)
+  .get( productController.search)
   .post([isLoggedIn, userAuth.checkAdmin], productController.store);
 
 router
@@ -16,4 +17,6 @@ router
   .patch([isLoggedIn, userAuth.checkAdmin], productController.update)
   .delete([isLoggedIn, userAuth.checkAdmin], productController.destroy);
 
+
+// export
 module.exports = router;

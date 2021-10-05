@@ -47,6 +47,21 @@ const store = catchAsync(async (req, res, next) => {
   });
 });
 
+const search = catchAsync(async (req, res, next) => {
+  const product = await Product.find({ title: req.query.title }).select(
+    "-_id status image"
+  );
+
+  if (!product) {
+    return next(new AppError("Product not found", 404));
+  }
+
+  res.status(200).json({
+    status: "success",
+    data: product,
+  });
+});
+
 const update = catchAsync(async (req, res, next) => {
   const { id } = req.params.id;
 
@@ -73,6 +88,7 @@ module.exports = {
   index,
   show,
   store,
+  search,
   update,
   destroy,
 };
