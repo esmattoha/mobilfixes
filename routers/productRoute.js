@@ -13,10 +13,12 @@ router
 
 router
   .route("/product/:id")
-  .get(productController.show)
   .patch([isLoggedIn, userAuth.checkAdmin], productController.update)
   .delete([isLoggedIn, userAuth.checkAdmin], productController.destroy);
 
+router
+  .route("/product/:slug")
+  .get(productController.show);
 
 // export
 module.exports = router;

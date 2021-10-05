@@ -1,4 +1,7 @@
 const mongoose = require("mongoose");
+const slug = require("mongoose-slug-generator");
+
+mongoose.plugin(slug);
 
 const Schema = mongoose.Schema;
 
@@ -20,6 +23,10 @@ const ProductSchema = new Schema(
     maxPrice: {
       type: Number,
       required: [true, "Highest Price is required"],
+    },
+    slug : {
+      type : String,
+      slug : "title"
     },
     variations: [
       {

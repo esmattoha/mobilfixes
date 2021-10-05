@@ -23,7 +23,7 @@ const index = catchAsync(async (req, res, next) => {
 });
 
 const show = catchAsync(async (req, res, next) => {
-  const product = await Product.findById(req.params.id);
+  const product = await Product.find({slug : req.params.slug}).select("-image -status -slug");
 
   if (!product) {
     return next(new AppError("Product not found", 404));
@@ -49,7 +49,7 @@ const store = catchAsync(async (req, res, next) => {
 
 const search = catchAsync(async (req, res, next) => {
   const product = await Product.find({ title: req.query.title }).select(
-    "-_id status image"
+    "-_id -status -image"
   );
 
   if (!product) {
