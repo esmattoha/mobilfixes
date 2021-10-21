@@ -3,6 +3,7 @@ const APIFeatures = require("./../utils/apiFeatures");
 const Product = require("./../models/productModel");
 const AppError = require("../utils/appError");
 const errorMessages = require("../resources/errorMessages");
+const { validationResult } = require("express-validator")
 
 const index = catchAsync(async (req, res, next) => {
   const features = new APIFeatures(
@@ -36,6 +37,12 @@ const show = catchAsync(async (req, res, next) => {
 });
 
 const store = catchAsync(async (req, res, next) => {
+  const error = validationResult(req);
+
+  if(!error.isEmpty()){
+    return res.status(406).json({error : error.array()});
+  }
+
   const product = await Product.create(req.body);
   if (!product) {
     return next(new AppError(errorMessages.GENERAL, 400));
@@ -76,7 +83,11 @@ const searchByCategory = catchAsync(async(req, res, next) =>{
 
 const update = catchAsync(async (req, res, next) => {
   const { id } = req.params.id;
+  const error = validationResult(req);
 
+  if(!error.isEmpty()){
+    return res.status(406).json({error : error.array()});
+  }
   const product = await Product.findByIdAndUpdate(id, req.body);
 
   res.status(200).json({

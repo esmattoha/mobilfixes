@@ -38,12 +38,12 @@ exports.store = catchAsync(async (req, res, next) => {
 exports.update = catchAsync(async (req, res, next) => {
   const { deviceId } = req.params;
   const { title, image } = req.body;
+  const error = validationResult(req);
 
-  if(!title || !image){
-    return next(new AppError("Invalid data Input", 406));
+  if (!error.isEmpty()) {
+    return res.status(406).json({error:error.array()});
   }
 
-  
   const device =  await Device.findByIdAndUpdate(deviceId, {
     $set :{
       title,

@@ -11,15 +11,31 @@ const router = express.Router();
 
 router
   .route("/device")
-  .post([isLoggedIn, userAuth.checkAdmin], [
-    check("title").isString().isLength({min:4}).withMessage("Invalid input data , title.")
-  ],deviceController.store)
+  .post(
+    [isLoggedIn, userAuth.checkAdmin],
+    [
+      check("title")
+        .isString()
+        .isLength({ min: 4 })
+        .withMessage("Invalid input data , title."),
+    ],
+    deviceController.store
+  )
   .get([cache.cacheMiddleware(30)], deviceController.index);
 
-
+  
 router
   .route("/device/:deviceId")
-  .patch([isLoggedIn, userAuth.checkAdmin], deviceController.update)
+  .patch(
+    [isLoggedIn, userAuth.checkAdmin],
+    [
+      check("title")
+        .isString()
+        .isLength({ min: 4 })
+        .withMessage("Invalid input data , title."),
+    ],
+    deviceController.update
+  )
   .get([cache.cacheMiddleware(30)], deviceController.show)
   .delete([isLoggedIn, userAuth.checkAdmin], deviceController.delete);
 
@@ -29,7 +45,6 @@ router.get(
   [isLoggedIn],
   deviceController.findRepairs
 );
-
 
 // Export Router
 module.exports = router;

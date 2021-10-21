@@ -5,15 +5,17 @@ const catchAsync = require("../utils/catchAsync");
 const AppError = require("../utils/appError");
 const errorMessages  = require("./../resources/errorMessages");
 const mongoose = require("mongoose");
+const { validationResult } = require("express-validator");
 
 /*
  *   Store Repair
  */
 exports.store = catchAsync(async (req, res, next) => {
   const { title, price, device, image, services } = req.body;
+  const error = validationResult(req);
 
-  if (!title || !price) {
-    return next(new AppError(`Invalid Input Data.`, 406));
+  if (!error.isEmpty()) {
+    return res.status(406).json({error: error.array()});
   }
 
   const repair = await Repair.create({ title, price, device, services, image });
@@ -71,9 +73,10 @@ exports.show = catchAsync(async (req, res, next) => {
 exports.update = catchAsync(async (req, res, next) => {
   const { repairId } = req.params;
   const { title, price, services, image } = req.body;
+  const error = validationResult(req);
 
-  if (!title || !image || !price || !services) {
-    return next(new AppError("Invalid data Input", 406));
+  if (!error.isEmpty()) {
+    return res.status(406).json({error: error.array()});
   }
 
   const repair = await Repair.findByIdAndUpdate(repairId, {
