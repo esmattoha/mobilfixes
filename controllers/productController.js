@@ -36,9 +36,7 @@ const show = catchAsync(async (req, res, next) => {
 });
 
 const store = catchAsync(async (req, res, next) => {
-  console.log(req.body);
   const product = await Product.create(req.body);
-  console.log(product);
   if (!product) {
     return next(new AppError(errorMessages.GENERAL, 400));
   }

@@ -3,15 +3,17 @@ const Repair = require("../models/repairModel");
 const catchAsync = require("../utils/catchAsync");
 const AppError = require("../utils/appError");
 const errorMessages = require("../resources/errorMessages");
+const { validationResult } = require("express-validator");
 
 /*
  *  Store Device
  */
 exports.store = catchAsync(async (req, res, next) => {
   const { title, parent, image } = req.body;
+  const error = validationResult(req);
 
-  if (!title) {
-    return next(new AppError(`Fill All Required Fields.`, 400));
+  if (!error.isEmpty()) {
+    return res.status(406).json({error:error.array()});
   }
 
   const device = await Device.create({

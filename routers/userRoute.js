@@ -14,17 +14,15 @@ router.post(
   [
     check("email").isEmail().withMessage("Email is not valid."),
     check("name")
-      .isLength({ min: 5, max: 14 })
-      .not()
+      .isString()
+      .isLength({ min: 5, max: 20 })
       .withMessage("Name must be 5 to 14 charaters. "),
     check("password")
       .isLength({ min: 6, max: 12 })
-      .not()
       .withMessage("Password must be in 6-12 character ."),
     check("phone")
       .isNumeric()
       .isLength({ min: 8, max: 14 })
-      .not()
       .withMessage("Put a valid phone number. "),
   ],
   userController.signUp

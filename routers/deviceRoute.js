@@ -4,13 +4,16 @@ const deviceController = require("../controllers/deviceController");
 const { isLoggedIn } = require("../middleware/checkAuthMiddleware");
 const userAuth = require("../middleware/userAuthMiddleware");
 const cache = require("../middleware/cacheMiddleware/cache");
+const { check } = require("express-validator");
 
 // Define Express router poperty
 const router = express.Router();
 
 router
   .route("/device")
-  .post([isLoggedIn, userAuth.checkAdmin], deviceController.store)
+  .post([isLoggedIn, userAuth.checkAdmin], [
+    check("title").isString().isLength({min:4}).withMessage("Invalid input data , title.")
+  ],deviceController.store)
   .get([cache.cacheMiddleware(30)], deviceController.index);
 
 
