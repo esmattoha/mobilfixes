@@ -36,7 +36,9 @@ const show = catchAsync(async (req, res, next) => {
 });
 
 const store = catchAsync(async (req, res, next) => {
+  console.log(req.body);
   const product = await Product.create(req.body);
+  console.log(product);
   if (!product) {
     return next(new AppError(errorMessages.GENERAL, 400));
   }
@@ -48,8 +50,8 @@ const store = catchAsync(async (req, res, next) => {
 });
 
 const search = catchAsync(async (req, res, next) => {
-  const product = await Product.find({ title: req.query.title }).select(
-    "-_id -status -image"
+  const product = await Product.findOne({ slug: req.query.slug }).select(
+    "-status"
   );
 
   if (!product) {
@@ -61,6 +63,18 @@ const search = catchAsync(async (req, res, next) => {
     data: product,
   });
 });
+
+const searchByCategory = catchAsync(async(req, res, next) =>{
+  const products = await Product.find({category:req.query.category}).select("-status -slug");
+  if (products.length <= 0 ) {
+    return next(new AppError("Product not found", 404));
+  }
+
+  res.status(200).json({
+    status: "success",
+    data: products,
+  });
+})
 
 const update = catchAsync(async (req, res, next) => {
   const { id } = req.params.id;
@@ -89,6 +103,7 @@ module.exports = {
   show,
   store,
   search,
+  searchByCategory,
   update,
   destroy,
 };

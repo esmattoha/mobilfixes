@@ -17,6 +17,10 @@ const ProductSchema = new Schema(
       trim: true,
       required: [true, "Title is required"],
     },
+    category:{
+      type : String,
+      required: [true, "Category is required."]
+    },
     image: {
       type: String,
     },

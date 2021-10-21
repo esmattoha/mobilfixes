@@ -11,6 +11,9 @@ router
   .get( productController.search)
   .post([isLoggedIn, userAuth.checkAdmin], productController.store);
 
+router.route("/products")
+.get(productController.searchByCategory);
+
 router
   .route("/product/:id")
   .patch([isLoggedIn, userAuth.checkAdmin], productController.update)
