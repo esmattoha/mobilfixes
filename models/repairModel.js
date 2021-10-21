@@ -9,11 +9,11 @@ const repairSchema = new Schema(
   {
     title: {
       type: String,
-      required: [true, "Repair title field is required"],
+      required: [true, "Title is required"],
     },
     price: {
       type: Number,
-      required: [true, "Repair price field is required"],
+      required: [true, "Price is required"],
     },
     device: [
       {

@@ -1,4 +1,4 @@
-// Import Dependencis
+ // Import Dependencis
 const bcrypt = require("bcrypt");
 const crypto = require("crypto");
 const User = require("../models/userModel");
@@ -8,16 +8,21 @@ const { signAccessToken } = require("../utils/jwtTokenHelper");
 const errorMessages = require("../resources/errorMessages");
 const successMessages = require("../resources/successMessages");
 const { sendEmail } = require("../utils/email");
+const { validationResult } = require("express-validator");
 
 /*
  * Working with User Sign Up Form
  */
 exports.signUp = catchAsync(async (req, res, next) => {
   const { name, email, phone, password } = req.body;
+  const error = validationResult(req);
 
-  if (!name || !email || !phone || !password) {
-    return next(new AppError("Invalid data Input", 406));
+  if(!error.isEmpty()){
+    return res.status(406).json({error : error.array()});
   }
+  // if (!name || !email || !phone || !password) {
+  //   return next(new AppError("Invalid data Input", 406));
+  // }
 
   // Password encryption
   const hashPassword = await bcrypt.hash(password, 12);
@@ -96,9 +101,10 @@ exports.verifyEmail = catchAsync(async (req, res, next) => {
  */
 exports.signIn = catchAsync(async (req, res, next) => {
   const { email, password } = req.body;
+  const error = validationResult(req);
 
-  if (!email || !password) {
-    return next(new AppError("Invalid data Input", 406));
+  if(!error.isEmpty()){
+    return res.status(406).json({error : error.array()});
   }
 
   // find User

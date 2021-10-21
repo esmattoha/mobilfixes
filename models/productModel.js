@@ -10,7 +10,7 @@ const ProductSchema = new Schema(
     // Material path
     device: {
       type: String,
-      reuired: [true, "Select a device"],
+      reuired: [true, "Device is required."],
     },
     title: {
       type: String,
