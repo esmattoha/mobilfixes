@@ -43,6 +43,12 @@ router
     userController.signIn
   );
 
+  ///
+  router.post("/token",  userController.newToken);
+
+  router.post("/token/disable",  userController.disabledToken);
+
+  ///
 /*
  *  Returns authenticated user
  */

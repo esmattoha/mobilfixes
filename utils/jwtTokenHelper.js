@@ -10,7 +10,7 @@ const signAccessToken = async (email, userId) => {
     },
     process.env.JWT_KEY,
     {
-      expiresIn: "10h",
+      expiresIn: "30s",
     }
   );
 };
@@ -29,7 +29,7 @@ const signRefreshToken = async (email, userId) => {
     },
     process.env.REFRESHTOKEN_SECRET_KEY,
     {
-      expiresIn: process.env.REFRESHTOKEN_LIFESPAN,
+      expiresIn: "1h",
     }
   );
 };

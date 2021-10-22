@@ -1,14 +1,19 @@
- // Import Dependencis
+// Import Dependencis
 const bcrypt = require("bcrypt");
 const crypto = require("crypto");
 const User = require("../models/userModel");
 const catchAsync = require("./../utils/catchAsync");
 const AppError = require("./../utils/appError");
-const { signAccessToken } = require("../utils/jwtTokenHelper");
+const {
+  signAccessToken,
+  signRefreshToken,
+} = require("../utils/jwtTokenHelper");
 const errorMessages = require("../resources/errorMessages");
 const successMessages = require("../resources/successMessages");
 const { sendEmail } = require("../utils/email");
 const { validationResult } = require("express-validator");
+
+const refreshTokens = {};
 
 /*
  * Working with User Sign Up Form
@@ -17,8 +22,8 @@ exports.signUp = catchAsync(async (req, res, next) => {
   const { name, email, phone, password } = req.body;
   const error = validationResult(req);
 
-  if(!error.isEmpty()){
-    return res.status(406).json({error : error.array()});
+  if (!error.isEmpty()) {
+    return res.status(406).json({ error: error.array() });
   }
   // if (!name || !email || !phone || !password) {
   //   return next(new AppError("Invalid data Input", 406));
@@ -103,8 +108,8 @@ exports.signIn = catchAsync(async (req, res, next) => {
   const { email, password } = req.body;
   const error = validationResult(req);
 
-  if(!error.isEmpty()){
-    return res.status(406).json({error : error.array()});
+  if (!error.isEmpty()) {
+    return res.status(406).json({ error: error.array() });
   }
 
   // find User
@@ -128,17 +133,54 @@ exports.signIn = catchAsync(async (req, res, next) => {
 
   // Token generate
   const accessToken = await signAccessToken(email, user._id);
+  const refreshToken = await signRefreshToken(email, user._id);
+
+  refreshTokens[refreshToken] = user.email;
 
   res.status(200).json({
     status: "success",
     token: accessToken,
+    refreshToken: refreshToken,
     user: {
       _id: user._id,
-      userName: user.userName,
+      userName: user.name,
       email: user.email,
       type: user.type,
     },
   });
+});
+
+/**
+ * creating A new access token
+ */
+exports.newToken = catchAsync(async (req, res, next) => {
+  const { refreshToken, email, userId } = req.body;
+  if (
+    refreshTokens &&
+    (refreshToken in refreshTokens) &&
+    (refreshTokens[refreshToken] == email)
+  ) {
+    const accessToken = await signAccessToken(email, userId);
+
+    return res.status(200).json({
+      status: "success",
+      token: accessToken,
+    });
+  }
+
+  res.status(401).json("Invalid input data");
+});
+
+/**
+ * if we want to deable our refresh token
+ */
+exports.disabledToken = catchAsync(async (req, res, next) => {
+  const { refreshToken } = req.body;
+  if (refreshToken in refreshTokens) {
+    delete refreshTokens[refreshToken];
+    return res.status(400).json({message: " successfll."})
+  }
+  res.status(400).json({message: "Your request didn't complete."})
 });
 
 /*
@@ -151,9 +193,9 @@ exports.index = catchAsync(async (req, res) => {
     return next(new AppError(errorMessages.RESOURCE_NOT_FOUND, 404));
   }
 
-  res.status(200).json({ 
-    status: "success", 
-    data: users 
+  res.status(200).json({
+    status: "success",
+    data: users,
   });
 });
 
@@ -169,9 +211,9 @@ exports.delete = catchAsync(async (req, res, next) => {
 
   await User.findByIdAndDelete(id);
 
-  res.status(200).json({ 
-    status : "success",
-    message: errorMessages.RESOUCE_DELETED 
+  res.status(200).json({
+    status: "success",
+    message: errorMessages.RESOUCE_DELETED,
   });
 });
 
@@ -247,9 +289,9 @@ exports.addNewAddress = catchAsync(async (req, res, next) => {
 
   await customer.update(newAddress);
 
-  return res.status(201).json({ 
+  return res.status(201).json({
     status: "success",
-    message: successMessages.RESOURCE_CREATED 
+    message: successMessages.RESOURCE_CREATED,
   });
 });
 
@@ -308,9 +350,9 @@ exports.updateAddress = catchAsync(async (req, res, next) => {
     updateAddress
   );
 
-  res.status(200).json({ 
+  res.status(200).json({
     status: "success",
-    message: successMessages.RESOURCE_UPDATED 
+    message: successMessages.RESOURCE_UPDATED,
   });
 });
 
@@ -330,9 +372,9 @@ exports.deleteAddress = catchAsync(async (req, res, next) => {
     $pull: { address: { _id: addressId } },
   });
 
-  res.status(200).json({ 
+  res.status(200).json({
     status: "success",
-    message: successMessages.RESOURCE_DELETED 
+    message: successMessages.RESOURCE_DELETED,
   });
 });
 
@@ -383,7 +425,10 @@ exports.updatePassword = catchAsync(async (req, res, next) => {
   const { buffer } = req.params;
   const { password, confirmPassword } = req.body;
 
-  if ((!buffer || !password || !confirmPassword) && (password === confirmPassword)) {
+  if (
+    (!buffer || !password || !confirmPassword) &&
+    password === confirmPassword
+  ) {
     return next(new AppError("Invalid data Input", 406));
   }
 
@@ -409,7 +454,7 @@ exports.updatePassword = catchAsync(async (req, res, next) => {
 
   await user.save();
   res.status(200).json({
-    status: "success", 
-    message: successMessages.RESOURCE_UPDATED 
+    status: "success",
+    message: successMessages.RESOURCE_UPDATED,
   });
 });
