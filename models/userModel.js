@@ -1,4 +1,4 @@
-// Import Dependencies
+ // Import Dependencies
 const mongoose = require("mongoose");
 
 // Define Mongoose Schema poperty
@@ -9,15 +9,15 @@ const userSchema = new Schema(
   {
     name: {
       type: String,
-      min:[4, "Atleast 4 character is required."],
-      max:[20, "You exceed charater limit."],
-      trim: true ,
+      min: [4, "Atleast 4 character is required."],
+      max: [20, "You exceed charater limit."],
+      trim: true,
       required: [true, "Name is required."],
     },
     email: {
       type: String,
       required: [true, "Email is required."],
-      trim: true ,
+      trim: true,
       unique: [true, "Email id is already exists."],
       index: true,
     },
@@ -28,7 +28,7 @@ const userSchema = new Schema(
     password: {
       type: String,
       require: [true, "Password is required."],
-      trim: true ,
+      trim: true,
       min: [4, "Must be 4 charater."],
       max: [12, "You exceed charater limit."],
       select: false,
@@ -39,6 +39,8 @@ const userSchema = new Schema(
       default: "customer",
       enum: ["customer", "manager", "admin"],
     },
+    jwtToken: String,
+    jwtToken_expire_at: Date,
     address: [
       {
         long: Number,

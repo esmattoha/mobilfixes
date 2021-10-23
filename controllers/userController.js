@@ -13,8 +13,6 @@ const successMessages = require("../resources/successMessages");
 const { sendEmail } = require("../utils/email");
 const { validationResult } = require("express-validator");
 
-const refreshTokens = {};
-
 /*
  * Working with User Sign Up Form
  */
@@ -135,7 +133,12 @@ exports.signIn = catchAsync(async (req, res, next) => {
   const accessToken = await signAccessToken(email, user._id);
   const refreshToken = await signRefreshToken(email, user._id);
 
-  refreshTokens[refreshToken] = user.email;
+const currentDate = new Date();
+
+user.jwtToken = refreshToken;
+user.jwtToken_expire_at = currentDate.setMinutes(new Date().getMinutes() + 20);
+
+await user.save();
 
   res.status(200).json({
     status: "success",
@@ -154,34 +157,20 @@ exports.signIn = catchAsync(async (req, res, next) => {
  * creating A new access token
  */
 exports.newToken = catchAsync(async (req, res, next) => {
-  const { refreshToken, email, userId } = req.body;
-  if (
-    refreshTokens &&
-    (refreshToken in refreshTokens) &&
-    (refreshTokens[refreshToken] == email)
-  ) {
-    const accessToken = await signAccessToken(email, userId);
-
-    return res.status(200).json({
-      status: "success",
-      token: accessToken,
-    });
-  }
-
-  res.status(401).json("Invalid input data");
-});
-
-/**
- * if we want to deable our refresh token
- */
-exports.disabledToken = catchAsync(async (req, res, next) => {
   const { refreshToken } = req.body;
-  if (refreshToken in refreshTokens) {
-    delete refreshTokens[refreshToken];
-    return res.status(400).json({message: " successfll."})
+  const user = await User.findOne({ jwtToken : refreshToken, jwtToken_expire_at: { $gt : Date.now()}});
+  if (!user) {
+    return res.status(401).json("Invalid input data");
   }
-  res.status(400).json({message: "Your request didn't complete."})
+
+  const accessToken = await signAccessToken(user.email, user._id);
+
+  res.status(200).json({
+    status: "success",
+    token: accessToken,
+  });
 });
+
 
 /*
  *   Showing All Users

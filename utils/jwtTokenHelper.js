@@ -29,7 +29,7 @@ const signRefreshToken = async (email, userId) => {
     },
     process.env.REFRESHTOKEN_SECRET_KEY,
     {
-      expiresIn: "1h",
+      expiresIn: "5m",
     }
   );
 };
